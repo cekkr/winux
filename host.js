@@ -20,7 +20,7 @@ function vmExec(command) {
 
                 res({stdout, stderr});
             });
-        }, 100);
+        }, 500);
     })
 }
 
@@ -42,6 +42,7 @@ async function main(){
 
     // Partitions
     let rFDisk = await vmExec("fdisk -l")
+    console.log("debug")
 
     return
     // Install node
