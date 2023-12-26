@@ -24,6 +24,68 @@ function vmExec(command) {
     })
 }
 
+function readFDiskL(stdout){
+    let lines = stdout.split('\n')
+    
+    let disks = {}
+
+    // Useless, but are there. Sorry real programmers.
+    let nLine = 0
+    let nPart = 0
+
+    let disk = {}
+
+    let justFlushed = true
+    function flushDisk(){
+        if(!justFlushed){
+            disks[disk.path] = disk
+            justFlushed = true
+        }
+    }
+
+    for(let line of lines){
+        if(line){
+            justFlushed = false 
+
+            let sl = line.split(':')
+
+            if(sl[0].startsWith('Disk /')){
+                disk.path = sl[0].split(' ')[1]
+
+                let props = sl[1].split(',')
+
+                for(let p in props){
+                    let prop = props[p].substring(1, props[p]-1)
+                    switch(p){
+                        case 0: 
+                            disk.size = prop
+                            break;
+                        case 1:
+                            disk.sizeBytes = prop
+                            break;
+                        case 2: 
+                            disk.sectors = prop 
+                            break
+                    }
+                }
+            }
+            else {
+                disk[sl[0]] = sl[1]
+            }
+
+            nLine++
+        }
+        else {
+            flushDisk()
+            nPart++
+            nLine = 0
+        }
+    }
+
+    flushDisk()
+    
+}
+
 // Example usage
 async function main(){
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
@@ -42,7 +104,9 @@ async function main(){
 
     // Partitions
     let rFDisk = await vmExec("fdisk -l")
-    console.log("debug")
+    let disks = readFDiskL(rFDisk)
+
+    console.log("disks: ", disks)
 
     return
     // Install node
