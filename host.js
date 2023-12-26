@@ -6,6 +6,7 @@ const vmName = "Arch Linux"; // Replace with your VM's name
 function vmExec(command) {      
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
+        command = command.replaceAll('"','\\"')
         const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "/bin/bash" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
 
         exec(vboxCommand, (error, stdout, stderr) => {
@@ -95,6 +96,13 @@ function readFDiskL(stdout){
     return disks
 }
 
+async function checkDiskStatus(disk){
+    // Check partition status:
+    let cmd = 'echo -e "'+['p','q'].join('\n')+'" | fdisk -w /dev/sda'
+    let res = await vmExec(cmd)
+    console.log("debug here")    
+}
+
 // Example usage
 async function main(){
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
@@ -116,6 +124,36 @@ async function main(){
     let disks = readFDiskL(rFDisk.stdout)
 
     console.log("disks: ", disks)
+
+    let disk = '/dev/sda'
+    
+    let diskStatus = checkDiskStatus(disk)
+
+    return;
+
+    // Create partitions:
+
+    let fdiskCmds = [
+        'n',
+        'p',
+        '\n', // partition number
+        '\n', // first sector
+        '+500M', // last sector
+
+        'n',
+        'p',
+        '\n', // partition number
+        '\n', // first sector
+        '\n', // rest of partitions
+
+        'p', // print
+        'w', // write
+    ]
+
+    let fdiskCmdsSeries = fdiskCmds.join('\n')
+    let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk -w /dev/sda'
+
+    await vmExec(cmd);
 
     return
     // Install node
