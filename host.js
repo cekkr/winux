@@ -98,9 +98,14 @@ function readFDiskL(stdout){
 
 async function checkDiskStatus(disk){
     // Check partition status:
-    let cmd = 'echo -e "'+['p','q'].join('\n')+'" | fdisk -w /dev/sda'
+    //let cmd = 'echo -e "'+['p','q'].join('\\n')+'" | fdisk /dev/sda' // just for testing purposes
+    let cmd = 'fdisk -l ' + disk
     let res = await vmExec(cmd)
-    console.log("debug here")    
+
+    let out = res.stdout 
+    let lines = out.split('\n')
+    
+    return lines.length == 5
 }
 
 // Example usage
@@ -127,33 +132,32 @@ async function main(){
 
     let disk = '/dev/sda'
     
-    let diskStatus = checkDiskStatus(disk)
-
-    return;
+    let diskStatus = await checkDiskStatus(disk)
 
     // Create partitions:
+    if(!diskStatus){
+        let fdiskCmds = [
+            'n',
+            'p',
+            '\n', // partition number
+            '\n', // first sector
+            '+500M', // last sector
 
-    let fdiskCmds = [
-        'n',
-        'p',
-        '\n', // partition number
-        '\n', // first sector
-        '+500M', // last sector
+            'n',
+            'p',
+            '\n', // partition number
+            '\n', // first sector
+            '\n', // rest of partitions
 
-        'n',
-        'p',
-        '\n', // partition number
-        '\n', // first sector
-        '\n', // rest of partitions
+            'p', // print
+            'w', // write
+        ]
 
-        'p', // print
-        'w', // write
-    ]
+        let fdiskCmdsSeries = fdiskCmds.join('\\n')
+        let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk -w /dev/sda'
 
-    let fdiskCmdsSeries = fdiskCmds.join('\n')
-    let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk -w /dev/sda'
-
-    await vmExec(cmd);
+        await vmExec(cmd);
+    }
 
     return
     // Install node
