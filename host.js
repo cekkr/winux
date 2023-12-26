@@ -139,15 +139,15 @@ async function main(){
         let fdiskCmds = [
             'n',
             'p',
-            '\n', // partition number
-            '\n', // first sector
+            '\\n', // partition number
+            '\\n', // first sector
             '+500M', // last sector
 
             'n',
             'p',
-            '\n', // partition number
-            '\n', // first sector
-            '\n', // rest of partitions
+            '\\n', // partition number
+            '\\n', // first sector
+            '\\n', // rest of partitions
 
             'p', // print
             'w', // write
@@ -158,6 +158,8 @@ async function main(){
 
         await vmExec(cmd);
     }
+
+    // retrieve disks
 
     return
     // Install node
