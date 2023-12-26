@@ -5,22 +5,26 @@ const vmName = "Arch Linux"; // Replace with your VM's name
 // Function to execute a command in the VM
 function vmExec(command) {      
     return new Promise((res, err)=>{   
-        setTimeout(()=>{
-            console.log("Executing: " + command)
-            const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "/bin/bash" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
+        console.log("Executing: " + command)
+        const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "/bin/bash" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
 
-            exec(vboxCommand, (error, stdout, stderr) => {
+        exec(vboxCommand, (error, stdout, stderr) => {
 
-                if(stderr) console.error(stderr)
-                if(stdout) console.log(stdout)
+            if(stderr) console.error(stderr)
+            if(stdout) console.log(stdout)
 
-                if ((!stdout && !stderr) && error) {
-                    throw error
-                }
+            if ((!stdout && !stderr) && error) {
+                    console.warn("Retry VBox command")
+                    setTimeout(()=>{
+                    (async ()=>{
+                        let r = await vmExec(command)
+                        res(r)
+                    })()
+                }, 100);
+            }
 
-                res({stdout, stderr});
-            });
-        }, 500);
+            res({stdout, stderr});
+        });
     })
 }
 
@@ -38,8 +42,10 @@ function readFDiskL(stdout){
     let justFlushed = true
     function flushDisk(){
         if(!justFlushed){
-            disks[disk.path] = disk
-            justFlushed = true
+            if(disk.path){
+                disks[disk.path] = disk
+                justFlushed = true
+            }
         }
     }
 
@@ -104,14 +110,14 @@ async function main(){
 
     // Partitions
     let rFDisk = await vmExec("fdisk -l")
-    let disks = readFDiskL(rFDisk)
+    let disks = readFDiskL(rFDisk.stdout)
 
     console.log("disks: ", disks)
 
     return
     // Install node
     res = await vmExec("sudo pacman -Syu --noconfirm nodejs")
-    console.log("Node install res: ", res)
+    console.log("Node install res: ", res.stdout)
 }
 
 main()
