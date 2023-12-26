@@ -90,6 +90,7 @@ function readFDiskL(stdout){
 
     flushDisk()
     
+    return disks
 }
 
 // Example usage
