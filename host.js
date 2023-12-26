@@ -22,8 +22,9 @@ function vmExec(command) {
                     })()
                 }, 100);
             }
-
-            res({stdout, stderr});
+            else {
+                res({stdout, stderr});
+            }
         });
     })
 }
@@ -44,6 +45,7 @@ function readFDiskL(stdout){
         if(!justFlushed){
             if(disk.path){
                 disks[disk.path] = disk
+                disk = {}
                 justFlushed = true
             }
         }
@@ -61,15 +63,15 @@ function readFDiskL(stdout){
                 let props = sl[1].split(',')
 
                 for(let p in props){
-                    let prop = props[p].substring(1, props[p]-1)
+                    let prop = props[p].substring(1, props[p].length)
                     switch(p){
-                        case 0: 
+                        case '0': 
                             disk.size = prop
                             break;
-                        case 1:
+                        case '1':
                             disk.sizeBytes = prop
                             break;
-                        case 2: 
+                        case '2': 
                             disk.sectors = prop 
                             break
                     }
