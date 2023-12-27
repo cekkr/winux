@@ -2,6 +2,11 @@ import { exec, spawn } from 'child_process';
 
 const useSpawn = true
 
+export let props = {
+    user: 'root',
+    password: ''
+}
+
 const vmName = "Arch Linux"; // Replace with your VM's name
 let bashPath = '/usr/bin/zsh'
 
@@ -38,10 +43,10 @@ export function vmExec(command) {
             args.push(bashPath)
 
             args.push('--username')
-            args.push('root')
+            args.push(props.user)
 
             args.push('--password')
-            args.push('')
+            args.push(props.password)
 
             args.push('--wait-stderr')
             args.push('--wait-stdout')
