@@ -33,8 +33,9 @@ export function vmExec(command) {
         console.log("Executing: " + command)
         //command = command.replaceAll('"','\\"')
 
-        if(!command.startsWith("echo START; "))
-            command = "echo START; " + command
+        if(!command.startsWith("echo START; ")){
+            command = "echo START; " + command + "; echo BYEBYEND"
+        }
         
         if(useSpawn){
             const args = [];
@@ -66,12 +67,18 @@ export function vmExec(command) {
 
             // Capture and display stdout
             let started = false
+            let ended = false
             childProcess.stdout.on('data', (data) => {
                 let str = data.toString()
                 if(!started){
                     if(str.startsWith('START')){
                         str = str.substring(6)
                         started = true
+                    }
+
+                    if(str.endsWith('BYEBYEND')){
+                        ended = true
+                        str = str.substring(0, str.length - 8)
                     }
                 }
                 
@@ -114,6 +121,10 @@ export function vmExec(command) {
                 console.log("VBoxManage close code ", code)
                 if(stderr.startsWith('VBoxManage'))
                     return vboxManageErr(stderr)
+
+                if(!ended){
+                    return vboxManageErr("NOT REALLY ENDED")
+                }
 
                 cmdAttempt = 0
 
