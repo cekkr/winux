@@ -31,7 +31,9 @@ export function vmExec(command) {
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
         //command = command.replaceAll('"','\\"')
-        command = "echo START; " + command
+
+        if(!command.startsWith("echo START; "))
+            command = "echo START; " + command
         
         if(useSpawn){
             const args = [];
