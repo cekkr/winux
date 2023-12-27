@@ -27,7 +27,7 @@ function vmExec(command) {
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
         //command = command.replaceAll('"','\\"')
-        command = "echo START; "
+        command = "echo START; " + command
         
         if(useSpawn){
             const args = [];
@@ -63,7 +63,7 @@ function vmExec(command) {
                 let str = data.toString()
                 if(!started){
                     if(str.startsWith('START')){
-                        str = str.substring(5)
+                        str = str.substring(6)
                         started = true
                     }
                 }
@@ -293,6 +293,29 @@ async function install_boot(){
     let disk = '/dev/sda'
     
     let diskStatus = disks[disk].parts != undefined
+
+    // Delete partition if they already exists
+    if(diskStatus){
+        console.log("Deleting existing partitions...")
+
+        let fdiskCmds = [
+            'd',
+            '',
+            'd',
+            '',
+            'w'
+        ]
+
+        let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
+        
+        await vmExec(cmd);
+
+        await sleep(waitAfterLongCmd)
+        rFDisk = await vmExec("fdisk -l " + disk)
+        disks = readFDiskL(rFDisk.stdout)
+
+        diskStatus = false
+    }
 
     // Create partitions:
     if(!diskStatus){
