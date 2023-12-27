@@ -99,6 +99,7 @@ function vmExec(command) {
                 cmdAttempt = 0
 
                 setTimeout(()=>{
+                    vboxManage("closesession --all")
                     res({stdout, stderr})
                 }, 100);
             });
@@ -292,7 +293,7 @@ async function install_write(){
         switch(p){
             case '0':
                 await vmExec("mkfs.fat -F 32 "+part.path)
-                await vmExec("mount "+part.path+" /mnt")
+                await vmExec("mount "+part.path+" /mnt/boot")
                 break;
 
             case '1':
@@ -309,10 +310,10 @@ async function install_write(){
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
     await vmExec("arch-chroot /mnt")
 
+    // Divided parts
     await install_configure()
-}
+    await grub_install()
 
-async function install_configure(){
     // time zone
     await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
     await vmExec("hwclock --systohc")
@@ -326,10 +327,16 @@ async function install_configure(){
     // set keyboard
     await vmExec('echo "KEYMAP=it" > /etc/locale.conf')
 
-    return
+    // grub install
+    await vmExec("grub-install --target=x86_64-efi --efi-directory=/mnt/boot --bootloader-id=GRUB")
+}
+
+async function install_nodejs(){
     // Install node
     res = await vmExec("sudo pacman -Syu --noconfirm nodejs")
     console.log("Node install res: ", res.stdout)
 }
 
-install_configure()
+//todo: /dev/sda is not obtained but costant
+
+install_write()
