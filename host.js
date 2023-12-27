@@ -13,10 +13,7 @@ function vboxManage(cmd){
             if(stderr) console.error(stderr)
             if(stdout) console.log(stdout)
 
-            if(error)
-                throw error
-
-            res()
+            res({stderr, stdout})
         });
     })
 }
@@ -26,7 +23,7 @@ let cmdAttempt = 0
 function vmExec(command) {      
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
-        command = command.replaceAll('"','\\"')
+        //command = command.replaceAll('"','\\"')
         
         if(useSpawn){
             const args = [];
@@ -62,12 +59,6 @@ function vmExec(command) {
                 stdout += data.toString()
             });
 
-            // Capture and display stderr
-            childProcess.stderr.on('data', (data) => {
-                console.error(data.toString())
-                stderr += data.toString()
-            });
-
             async function vboxManageErr(err){
 
                 if(err.includes("Maximum number of concurrent guest sessions"))
@@ -76,7 +67,7 @@ function vmExec(command) {
                 console.error(`VBoxManager process error: ${err}`);
                 console.warn("Retry VBox command")
 
-                if(cmdAttempt++ == 3){
+                if(cmdAttempt++ == 3 || err.includes("failed to run command ‘/bin/bash’: No such file or directory")){
                     if(!bashPath.startsWith('/usr')){
                         bashPath = '/usr'+bashPath
                         console.log("moving to /usr/bin/")
@@ -99,9 +90,18 @@ function vmExec(command) {
                 cmdAttempt = 0
 
                 setTimeout(()=>{
-                    vboxManage("closesession --all")
                     res({stdout, stderr})
-                }, 100);
+                }, 500);
+            });
+
+            // Capture and display stderr
+            childProcess.stderr.on('data', (data) => {
+                if(data.toString().includes("failed to run command ‘/bin/bash’: No such file or directory")){
+                    return vboxManageErr(data)
+                }
+
+                console.error(data.toString())
+                stderr += data.toString()
             });
 
             childProcess.on('error', (err) => {
@@ -224,8 +224,22 @@ function composeInAppCommands(cmd, cmds){
     return res
 }
 
+function sleep(ms){
+    return new Promise((res)=>{
+        setTimeout(
+            ()=>{
+                res()
+            }, ms
+        )
+    })
+}
+
 // Example usage
 async function install_write(){
+    console.log("trying to clear VBoxManage sessions")
+    vboxManage("closesession --all")
+    await sleep(1000)
+
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
     let hasEfi = res.stdout.startsWith('64')
 
@@ -285,6 +299,9 @@ async function install_write(){
     // retrieve disk info
     let diskInfo = disks[disk]
 
+    let mainPath = ''
+    let bootPath = ''
+
     // create partitions
     let parts = diskInfo.parts 
     for(let p in parts){
@@ -293,15 +310,18 @@ async function install_write(){
         switch(p){
             case '0':
                 await vmExec("mkfs.fat -F 32 "+part.path)
-                await vmExec("mount "+part.path+" /mnt/boot")
+                bootPath = part.path
                 break;
 
             case '1':
                 await vmExec("mkfs.ext4 "+part.path)
-                await vmExec("mount --mkdir "+part.path+" /mnt")
+                mainPath = part.path
                 break;
         }
     }
+
+    await vmExec("mount "+mainPath+" /mnt")
+    await vmExec("mount --mkdir "+bootPath+" /mnt/boot")
 
     // install linux
     let linuxRes = await vmExec("pacstrap -c -K /mnt base linux linux-firmware")
@@ -309,10 +329,6 @@ async function install_write(){
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
     await vmExec("arch-chroot /mnt")
-
-    // Divided parts
-    await install_configure()
-    await grub_install()
 
     // time zone
     await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
