@@ -114,6 +114,8 @@ function composeInAppCommands(cmd, cmds){
 }
 
 async function vmChrootExec(cmd){
+    cmd = cmd.replaceAll('"','\\"')
+
     cmd = 'arch-chroot /mnt /bin/bash -c "'+cmd+'"'
     await vbox.vmExec(cmd)
 }
@@ -239,6 +241,7 @@ async function install_boot(){
 
     // Configure the system
     await vbox.vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    await vbox.sleep(waitAfterLongCmd)
 
     //await vbox.vmExec("arch-chroot /mnt") // enters in chroot
     
@@ -248,6 +251,7 @@ async function install_boot(){
 
     // locale
     await vmChrootExec("locale-gen")
+    await vbox.sleep(waitAfterLongCmd)
 
     // set language
     await vmChrootExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
@@ -255,13 +259,12 @@ async function install_boot(){
     // set keyboard
     await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
 
-    await vbox.sleep(waitAfterLongCmd)
-
     // grub install
     await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
     await vbox.sleep(waitAfterLongCmd)
 
     await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
+    await vbox.sleep(waitAfterLongCmd)
 
     await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
 
@@ -283,6 +286,16 @@ async function install_boot(){
     // dns
     await vmChrootExec('systemctl enable --now systemd-resolved.service')  
     await vmChrootExec('echo "[Resolve]\\nDNS=8.8.8.8 8.8.4.4\\n" > /etc/systemd/resolved.conf')
+
+    
+    // install virtualbox
+    await vmChrootExec("pacman -Syu --noconfirm virtualbox-guest-utils")
+    await vmChrootExec("systemctl enable --now vboxservice")  
+
+    // install openssh
+    await vmChrootExec("pacman -Syu --noconfirm openssh")  
+    await vmChrootExec("systemctl start sshd")  
+    await vmChrootExec("systemctl enable sshd")  
 }
 
 async function install_nodejs(){
@@ -292,12 +305,15 @@ async function install_nodejs(){
 }
 
 async function temp(){
-    await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
+
+    //:: force pacman unlock
+    await vmChrootExec("rm /var/lib/pacman/db.lck")
+    
 }
 
 //todo: /dev/sda is not obtained but costant
 
-install_boot()
-//temp()
+//install_boot()
+temp()
 
 //vbox.closeSessions()
