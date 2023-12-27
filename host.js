@@ -235,11 +235,20 @@ function sleep(ms){
     })
 }
 
-// Example usage
-async function install_write(){
+async function closeSessions(){
     console.log("trying to clear VBoxManage sessions")
     vboxManage("closesession --all")
     await sleep(2000)
+}
+
+async function vmChrootExec(cmd){
+    cmd = 'arch-chroot /mnt /bin/bash -c "'+cmd+'"'
+    await vmExec(cmd)
+}
+
+// Example usage
+async function install_write(){
+    await closeSessions()
 
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
     let hasEfi = res.stdout.startsWith('64')
@@ -330,23 +339,25 @@ async function install_write(){
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
-    await vmExec("arch-chroot /mnt")
 
+    //await vmExec("arch-chroot /mnt") // enters in chroot
+    
     // time zone
-    await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
-    await vmExec("hwclock --systohc")
+    await vmChrootExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
+    await vmChrootExec("hwclock --systohc")
 
     // locale
-    await vmExec("locale-gen")
+    await vmChrootExec("locale-gen")
 
     // set language
-    await vmExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
+    await vmChrootExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
 
     // set keyboard
-    await vmExec('echo "KEYMAP=it" > /etc/locale.conf')
+    await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
 
     // grub install
-    await vmExec("grub-install --target=x86_64-efi --efi-directory=/mnt/boot --bootloader-id=GRUB")
+    await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
+    await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
 }
 
 async function install_nodejs(){
@@ -356,30 +367,14 @@ async function install_nodejs(){
 }
 
 async function temp(){
-    // Configure the system
-    await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    await closeSessions()
 
-    //await vmExec("arch-chroot /mnt /bin/bash")
-    await vmExec('script -q -c "arch-chroot /mnt" /dev/null')
-
-    // time zone
-    await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
-    await vmExec("hwclock --systohc")
-
-    // locale
-    await vmExec("locale-gen")
-
-    // set language
-    await vmExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
-
-    // set keyboard
-    await vmExec('echo "KEYMAP=it" > /etc/locale.conf')
-
-    // grub install
-    await vmExec("grub-install --target=x86_64-efi --efi-directory=/mnt/boot --bootloader-id=GRUB")
+    
 }
 
 //todo: /dev/sda is not obtained but costant
 
 //install_write()
 temp()
+
+//closeSessions()
