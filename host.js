@@ -1,32 +1,94 @@
-const { exec } = require('child_process');
+const { exec, child } = require('child_process');
+
+const useChild = true
 
 const vmName = "Arch Linux"; // Replace with your VM's name
+let bashPath = '/bin/bash'
 
 // Function to execute a command in the VM
+let cmdAttempt = 0
 function vmExec(command) {      
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
         command = command.replaceAll('"','\\"')
-        const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "/bin/bash" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
+        
+        if(useChild){
+            const command = 'VBoxManage';
+            const args = [];
+            args.push('guestcontrol')
+            args.push('"Arch Linux"')
+            args.push('run')
 
-        exec(vboxCommand, (error, stdout, stderr) => {
+            args.push('--exe')
+            args.push('"'+basePath+'"')
 
-            if(stderr) console.error(stderr)
-            if(stdout) console.log(stdout)
+            args.push('--username')
+            args.push('"root"')
 
-            if ((!stdout && !stderr) && error) {
-                    console.warn("Retry VBox command")
+            args.push('--password')
+            args.push('""')
+
+            args.push('--wait-stderr')
+            args.push('--wait-stdout')
+
+            args.push('--')
+            args.push('-c')
+            args.push('"'+command+'"')
+            
+            let stdout = ''
+            let stderr = ''
+
+            // Spawn the child process
+            const childProcess = spawn(command, args);
+
+            // Capture and display stdout
+            childProcess.stdout.on('data', (data) => {
+                stdout += data.toString()
+            });
+
+            // Capture and display stderr
+            childProcess.stderr.on('data', (data) => {
+                stderr += data.toString()
+            });
+
+            // Handle process exit
+            childProcess.on('close', (code) => {
+                res({stdout, stderr})
+            });
+        }
+        else {
+            const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "${bashPath}" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
+            exec(vboxCommand, (error, stdout, stderr) => {
+
+                if(stderr) console.error(stderr)
+                if(stdout) console.log(stdout)
+
+                if ((!stdout && !stderr) && error) {
+                        //‘/bin/bash’: No such file or directory
+                        console.warn("Retry VBox command")
+
+                        if(cmdAttempt++ == 3){
+                            if(!bashPath.startsWith('/usr')){
+                                bashPath = '/usr'+bashPath
+                                console.log("moving to /usr/bin/")
+                            }
+                        }
+
+                        setTimeout(()=>{
+                        (async ()=>{
+                            let r = await vmExec(command)
+                            res(r)
+                        })()
+                    }, 250);
+                }
+                else {
+                    cmdAttempt = 0
                     setTimeout(()=>{
-                    (async ()=>{
-                        let r = await vmExec(command)
-                        res(r)
-                    })()
-                }, 100);
-            }
-            else {
-                res({stdout, stderr});
-            }
-        });
+                        res({stdout, stderr});
+                    }, 100);
+                }
+            });
+        }
     })
 }
 
@@ -221,14 +283,18 @@ async function main(){
     }
 
     // install linux
-    let linuxRes = vmExec("pacstrap -K /mnt base linux linux-firmware")
+    let linuxRes = vmExec("pacstrap -c -K /mnt base linux linux-firmware")
 
     // Configure the system
     vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
     vmExec("arch-chroot /mnt")
     
+    // time zone
     vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
     vmExec("hwclock --systohc")
+
+    // locale
+    vmExec("locale-gen")
 
     return
     // Install node
