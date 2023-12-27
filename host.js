@@ -67,7 +67,7 @@ function vmExec(command) {
                 console.error(`VBoxManager process error: ${err}`);
                 console.warn("Retry VBox command")
 
-                if(cmdAttempt++ == 3 || err.includes("failed to run command ‘/bin/bash’: No such file or directory")){
+                if(cmdAttempt++ == 3 || err.includes("failed to run command '/bin/bash': No such file or directory")){
                     if(!bashPath.startsWith('/usr')){
                         bashPath = '/usr'+bashPath
                         console.log("moving to /usr/bin/")
@@ -84,6 +84,7 @@ function vmExec(command) {
 
             // Handle process exit
             childProcess.on('close', (code) => {
+                console.log("VBoxManage close code ", code)
                 if(stderr.startsWith('VBoxManage'))
                     return vboxManageErr(stderr)
 
@@ -91,7 +92,7 @@ function vmExec(command) {
 
                 setTimeout(()=>{
                     res({stdout, stderr})
-                }, 500);
+                }, 250);
             });
 
             // Capture and display stderr
@@ -238,7 +239,7 @@ function sleep(ms){
 async function install_write(){
     console.log("trying to clear VBoxManage sessions")
     vboxManage("closesession --all")
-    await sleep(1000)
+    await sleep(2000)
 
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
     let hasEfi = res.stdout.startsWith('64')
@@ -292,6 +293,7 @@ async function install_write(){
         
         let writeDiskRes = await vmExec(cmd);
 
+        await sleep(1000)
         rFDisk = await vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
     }
@@ -324,7 +326,7 @@ async function install_write(){
     await vmExec("mount --mkdir "+bootPath+" /mnt/boot")
 
     // install linux
-    let linuxRes = await vmExec("pacstrap -c -K /mnt base linux linux-firmware")
+    let linuxRes = await vmExec("pacstrap -K /mnt base linux linux-firmware")
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
@@ -353,6 +355,29 @@ async function install_nodejs(){
     console.log("Node install res: ", res.stdout)
 }
 
+async function temp(){
+    // Configure the system
+    await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    await vmExec("arch-chroot /mnt /bin/bash")
+
+    // time zone
+    await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
+    await vmExec("hwclock --systohc")
+
+    // locale
+    await vmExec("locale-gen")
+
+    // set language
+    await vmExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
+
+    // set keyboard
+    await vmExec('echo "KEYMAP=it" > /etc/locale.conf')
+
+    // grub install
+    await vmExec("grub-install --target=x86_64-efi --efi-directory=/mnt/boot --bootloader-id=GRUB")
+}
+
 //todo: /dev/sda is not obtained but costant
 
-install_write()
+//install_write()
+temp()
