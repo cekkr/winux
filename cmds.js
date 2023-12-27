@@ -6,7 +6,7 @@ async function execCmdIfVbox(vbox, cmd){
 }
 
 export async function makeCmdPacmanInstall(packages, vbox=null){
-    let cmd = 'pacman -S --noconfirm ' + packages
+    let cmd = 'pacman -Sy --noconfirm ' + packages
     await execCmdIfVbox(vbox, cmd)
     return cmd
 }
