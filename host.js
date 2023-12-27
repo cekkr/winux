@@ -3,7 +3,7 @@ const { exec, spawn } = require('child_process');
 const useSpawn = true
 
 const vmName = "Arch Linux"; // Replace with your VM's name
-let bashPath = '/bin/bash'
+let bashPath = '/usr/bin/zsh'
 
 function vboxManage(cmd){
     return new Promise((res, err)=>{   
@@ -67,12 +67,12 @@ function vmExec(command) {
                 console.error(`VBoxManager process error: ${err}`);
                 console.warn("Retry VBox command")
 
-                if(cmdAttempt++ == 3 || err.includes("failed to run command '/bin/bash': No such file or directory")){
+                /*if(cmdAttempt++ == 3 || err.includes("failed to run command '/bin/bash': No such file or directory")){
                     if(!bashPath.startsWith('/usr')){
                         bashPath = '/usr'+bashPath
                         console.log("moving to /usr/bin/")
                     }
-                }
+                }*/
 
                 setTimeout(()=>{
                     (async ()=>{
@@ -242,12 +242,12 @@ async function closeSessions(){
 }
 
 async function vmChrootExec(cmd){
-    cmd = 'arch-chroot /mnt /bin/bash -c "'+cmd+'"'
+    cmd = 'arch-chroot /mnt /usr/bin/zsh -c "'+cmd+'"'
     await vmExec(cmd)
 }
 
 // Example usage
-async function install_write(){
+async function install_boot(){
     await closeSessions()
 
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
@@ -355,9 +355,15 @@ async function install_write(){
     // set keyboard
     await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
 
+    await sleep(10000)
+
     // grub install
     await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
+    await sleep(5000)
+
     await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
+
+    await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
 }
 
 async function install_nodejs(){
@@ -369,12 +375,17 @@ async function install_nodejs(){
 async function temp(){
     await closeSessions()
 
+    // grub install
+    await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
     
+    await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
+
+    await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
 }
 
 //todo: /dev/sda is not obtained but costant
 
-//install_write()
+//install_boot()
 temp()
 
 //closeSessions()
