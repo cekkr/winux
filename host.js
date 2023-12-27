@@ -68,10 +68,10 @@ function vmExec(command) {
                 stderr += data.toString()
             });
 
-            function vboxManageErr(err){
+            async function vboxManageErr(err){
 
                 if(err.includes("Maximum number of concurrent guest sessions"))
-                    vboxManage("closesession -all")
+                    await vboxManage("closesession --all")
 
                 console.error(`VBoxManager process error: ${err}`);
                 console.warn("Retry VBox command")
@@ -303,14 +303,7 @@ async function main(){
     }
 
     // install linux
-    let linuxInstalled = (await vmExec("pacman -Q linux")).stdout.startsWith('linux')
-
-    if(!linuxInstalled){
-        let linuxRes = await vmExec("pacstrap -c -K /mnt base linux linux-firmware")
-    }
-    else {
-        console.log("Linux already installed")
-    }
+    let linuxRes = await vmExec("pacstrap -c -K /mnt base linux linux-firmware")
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
