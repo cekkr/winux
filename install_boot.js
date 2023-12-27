@@ -1,6 +1,6 @@
 import * as vbox from './vbox.js'
   
-const waitAfterLongCmd = 5000
+const waitAfterLongCmd = 10000
 
 function readFDiskL(stdout){
     let lines = stdout.split('\n')
@@ -313,7 +313,7 @@ async function temp(){
 
 //todo: /dev/sda is not obtained but costant
 
-//install_boot()
-temp()
+install_boot()
+//temp()
 
 //vbox.closeSessions()
