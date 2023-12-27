@@ -1,4 +1,17 @@
 
+export function composeInAppCommands(cmd, cmds){
+    let res = '('
+
+    for(let c of cmds){
+        res += 'echo -e "'+c+'";'
+        res += 'sleep 0.5;'
+    }
+
+    res += ') | ' + cmd 
+
+    return res
+}
+
 async function execCmdIfVbox(vbox, cmd){
     if(vbox){
         return await vbox.vmExec(cmd)
@@ -15,6 +28,18 @@ export async function makeCmdPacmanUpdateSystem(vbox=null){
     let cmd = 'pacman -Syu'
     await execCmdIfVbox(vbox, cmd)
     return cmd
+}
+
+export async function makeCmdCreateUser(vbox, user, pass){
+    await vbox.vmExec("useradd -m -G wheel "+user)
+
+    let passwdCmds = [
+        pass,
+        pass
+    ]
+
+    let passwdCmd = cmds.composeInAppCommands("passwd "+user, passwdCmds)
+    await vbox.vmExec(passwdCmd)
 }
 
 export function readIpLink(stdout){

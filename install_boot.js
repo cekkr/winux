@@ -101,19 +101,6 @@ function readFDiskL(stdout){
     return disks
 }
 
-function composeInAppCommands(cmd, cmds){
-    let res = '('
-
-    for(let c of cmds){
-        res += 'echo -e "'+c+'";'
-        res += 'sleep 0.5;'
-    }
-
-    res += ') | ' + cmd 
-
-    return res
-}
-
 async function vmChrootExec(cmd){
     cmd = cmd.replaceAll('"','\\"')
 
@@ -161,7 +148,7 @@ async function install_boot(){
             'w'
         ]
 
-        let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
+        let cmd = cmds.composeInAppCommands('fdisk '+disk, fdiskCmds)
         
         await vbox.vmExec(cmd);
 
@@ -198,7 +185,7 @@ async function install_boot(){
         //let fdiskCmdsSeries = fdiskCmds.join('\\n')
         //let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk ' + disk
 
-        let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
+        let cmd = cmds.composeInAppCommands('fdisk '+disk, fdiskCmds)
         
         let writeDiskRes = await vbox.vmExec(cmd);
 
@@ -276,7 +263,7 @@ async function install_boot(){
         'admin'
     ]
 
-    let cmd = composeInAppCommands('passwd', passwdCmd)
+    let cmd = cmds.composeInAppCommands('passwd', passwdCmd)
     await vmChrootExec(cmd);
 
     // set hostname
