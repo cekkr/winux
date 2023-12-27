@@ -4,9 +4,7 @@ import * as cmds from './cmds.js'
 vbox.props.password = 'admin'
 vbox.props.bashPath = '/bin/bash'
 
-async function install_env(){
-    await vbox.vmExec("echo hello")
-
+async function install_connection(){
     let res = await vbox.vmExec("ip link")
     let interfaces = cmds.readIpLink(res.stdout)
 
@@ -33,13 +31,22 @@ async function install_env(){
     await vbox.vmExec('ip addr add 10.0.2.15/24 dev '+chosenInt)
     await vbox.vmExec("ip route add default via 10.0.2.1")
 
+    // Install base tools for environment recognition
+    await cmds.makeCmdPacmanInstall("which net-tools")
 
+    return
+}
+
+async function install_env(){
+    await install_connection()
+
+    await cmds.makeCmdPacmanUpdateSystem(vbox)
 
     return
 }
 
 async function temp(){
-    await vbox.vmExec(cmds.makeCmdPacmanInstall("which"))
+   
 }
 
 //install_env()

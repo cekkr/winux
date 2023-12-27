@@ -1,6 +1,20 @@
 
-export function makeCmdPacmanInstall(packages){
-    return 'pacman -Syu --noconfirm ' + packages
+async function execCmdIfVbox(vbox, cmd){
+    if(vbox){
+        return await vbox.vmExec(cmd)
+    }
+}
+
+export async function makeCmdPacmanInstall(packages, vbox=null){
+    let cmd = 'pacman -Syu --noconfirm ' + packages
+    await execCmdIfVbox(vbox, cmd)
+    return cmd
+}
+
+export async function makeCmdPacmanUpdateSystem(vbox=null){
+    let cmd = 'pacman -Syu'
+    await execCmdIfVbox(vbox, cmd)
+    return cmd
 }
 
 export function readIpLink(stdout){
