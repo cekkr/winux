@@ -53,7 +53,29 @@ function vmExec(command) {
 
             // Handle process exit
             childProcess.on('close', (code) => {
+                cmdAttempt = 0
                 res({stdout, stderr})
+            });
+
+            childProcess.on('error', (err) => {
+                if(!stderr && !stdout){
+                    console.error(`VBoxManager process error: ${err.message}`);
+                    console.warn("Retry VBox command")
+
+                    if(cmdAttempt++ == 3){
+                        if(!bashPath.startsWith('/usr')){
+                            bashPath = '/usr'+bashPath
+                            console.log("moving to /usr/bin/")
+                        }
+                    }
+
+                    setTimeout(()=>{
+                        (async ()=>{
+                            let r = await vmExec(command)
+                            res(r)
+                        })()
+                    }, 250);
+                }
             });
         }
         else {
@@ -75,11 +97,11 @@ function vmExec(command) {
                         }
 
                         setTimeout(()=>{
-                        (async ()=>{
-                            let r = await vmExec(command)
-                            res(r)
-                        })()
-                    }, 250);
+                            (async ()=>{
+                                let r = await vmExec(command)
+                                res(r)
+                            })()
+                        }, 250);
                 }
                 else {
                     cmdAttempt = 0
