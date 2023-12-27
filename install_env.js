@@ -37,16 +37,33 @@ async function install_connection(){
     return
 }
 
+async function install_kdePlasma(){
+    await vbox.sleep(vbox.waitAfterCmd)
+
+    await cmds.makeCmdPacmanUpdateSystem(vbox)
+    await vbox.sleep(vbox.waitAfterCmd)
+
+    await cmds.makeCmdPacmanInstall('plasma kde-applications')
+    await vbox.sleep(vbox.waitAfterLongCmd)
+
+    await vbox.vmExec('systemctl enable sddm.service')
+    await vbox.sleep(vbox.waitAfterCmd)
+    await vbox.vmExec('systemctl systemctl start sddm.service')
+    await vbox.sleep(vbox.waitAfterLongCmd)
+
+    vbox.vmExec('reboot')
+}
+
 async function install_env(){
     await install_connection()
 
-    await cmds.makeCmdPacmanUpdateSystem(vbox)
+    await install_kdePlasma()
 
     return
 }
 
 async function temp(){
-   
+    install_kdePlasma()
 }
 
 //install_env()
