@@ -165,6 +165,8 @@ async function install_boot(){
         await vbox.sleep(waitAfterLongCmd)
         rFDisk = await vbox.vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
+        
+        await vbox.sleep(waitAfterLongCmd)
 
         diskStatus = false
     }
