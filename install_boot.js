@@ -1,4 +1,5 @@
 import * as vbox from './vbox.js'
+import * as cmds from './cmds.js'
   
 const waitAfterLongCmd = 10000
 

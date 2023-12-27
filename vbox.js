@@ -4,11 +4,11 @@ const useSpawn = true
 
 export let props = {
     user: 'root',
-    password: ''
+    password: '',
+    bashPath: '/usr/bin/zsh'
 }
 
 const vmName = "Arch Linux"; // Replace with your VM's name
-let bashPath = '/usr/bin/zsh'
 
 const waitAfterCmd = 2000
 
@@ -42,7 +42,7 @@ export function vmExec(command) {
             args.push('run')
 
             args.push('--exe')
-            args.push(bashPath)
+            args.push(props.bashPath)
 
             args.push('--username')
             args.push(props.user)
