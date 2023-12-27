@@ -38,6 +38,7 @@ function readFDiskL(stdout){
     // Useless, but are there. Sorry real programmers.
     let nLine = 0
     let nPart = 0
+    let readingPartitions = false
 
     let disk = {}
 
@@ -48,64 +49,83 @@ function readFDiskL(stdout){
                 disks[disk.path] = disk
                 disk = {}
                 justFlushed = true
+                readingPartitions = false
             }
         }
     }
 
+    let njump = 0
+    let table = []
     for(let line of lines){
         if(line){
             justFlushed = false 
 
-            let sl = line.split(':')
+            if(njump == 1){
+                njump = 0
 
-            if(sl[0].startsWith('Disk /')){
-                disk.path = sl[0].split(' ')[1]
+                table = line.split(' ').filter((e) => e !== "")
 
-                let props = sl[1].split(',')
+                if(table[0] == 'Device'){ 
+                    readingPartitions = true
+                    disk.parts = []
+                    continue
+                }
+            }
 
-                for(let p in props){
-                    let prop = props[p].substring(1, props[p].length)
-                    switch(p){
-                        case '0': 
-                            disk.size = prop
-                            break;
-                        case '1':
-                            disk.sizeBytes = prop
-                            break;
-                        case '2': 
-                            disk.sectors = prop 
-                            break
+            if(!readingPartitions){
+                let sl = line.split(':')
+
+                if(sl[0].startsWith('Disk /')){
+                    disk.path = sl[0].split(' ')[1]
+
+                    let props = sl[1].split(',')
+
+                    for(let p in props){
+                        let prop = props[p].substring(1, props[p].length)
+                        switch(p){
+                            case '0': 
+                                disk.size = prop
+                                break;
+                            case '1':
+                                disk.sizeBytes = prop
+                                break;
+                            case '2': 
+                                disk.sectors = prop 
+                                break
+                        }
                     }
+                }
+                else {
+                    disk[sl[0]] = sl[1]
                 }
             }
             else {
-                disk[sl[0]] = sl[1]
+                let isize = table.indexOf('Sectors')
+                let row = line.split(' ').filter((e) => e !== "")
+                
+                disk.parts.push({
+                    path: row[0],
+                    size: row[isize]
+                })
             }
 
             nLine++
         }
         else {
-            flushDisk()
-            nPart++
-            nLine = 0
+            njump++
+
+            if(njump > 1){
+                flushDisk()
+                nPart++
+                nLine = 0
+                njump = 0
+            }
         }
     }
 
     flushDisk()
     
     return disks
-}
-
-async function checkDiskStatus(disk){
-    // Check partition status:
-    //let cmd = 'echo -e "'+['p','q'].join('\\n')+'" | fdisk /dev/sda' // just for testing purposes
-    let cmd = 'fdisk -l ' + disk
-    let res = await vmExec(cmd)
-
-    let out = res.stdout 
-    let lines = out.split('\n')
-    
-    return lines.length == 5
 }
 
 function composeInAppCommands(cmd, cmds){
@@ -145,7 +165,7 @@ async function main(){
 
     let disk = '/dev/sda'
     
-    let diskStatus = await checkDiskStatus(disk)
+    let diskStatus = disks[disk].parts != undefined
 
     // Create partitions:
     if(!diskStatus){
@@ -174,11 +194,41 @@ async function main(){
         let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
         
         let writeDiskRes = await vmExec(cmd);
+
+        rFDisk = await vmExec("fdisk -l " + disk)
+        disks = readFDiskL(rFDisk.stdout)
     }
 
-    // retrieve disks
-    rFDisk = await vmExec("fdisk -l " + disk)
-    disks = readFDiskL(rFDisk.stdout)
+    // retrieve disk info
+    let diskInfo = disks[disk]
+
+    // create partitions
+    let parts = diskInfo.parts 
+    for(let p in parts){
+        let part = parts[p]
+
+        switch(p){
+            case '0':
+                await vmExec("mkfs.fat -F 32 "+part.path)
+                await vmExec("mount "+part.path+" /mnt")
+                break;
+
+            case '1':
+                await vmExec("mkfs.ext4 "+part.path)
+                await vmExec("mount --mkdir "+part.path+" /mnt")
+                break;
+        }
+    }
+
+    // install linux
+    let linuxRes = vmExec("pacstrap -K /mnt base linux linux-firmware")
+
+    // Configure the system
+    vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    vmExec("arch-chroot /mnt")
+    
+    vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
+    vmExec("hwclock --systohc")
 
     return
     // Install node
