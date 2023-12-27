@@ -34,6 +34,8 @@ async function install_connection(){
     // Install base tools for environment recognition
     await cmds.makeCmdPacmanInstall("which net-tools")
 
+    await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
+
     return
 }
 
@@ -66,8 +68,6 @@ async function temp(){
     //await install_connection()
 
     //await vbox.vmExec("rm /var/lib/pacman/db.lck")
-
-    await cmds.makeCmdCreateUser(vbox, 'user', 'password')
 }
 
 //install_env()

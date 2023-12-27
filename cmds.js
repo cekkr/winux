@@ -38,7 +38,7 @@ export async function makeCmdCreateUser(vbox, user, pass){
         pass
     ]
 
-    let passwdCmd = cmds.composeInAppCommands("passwd "+user, passwdCmds)
+    let passwdCmd = composeInAppCommands("passwd "+user, passwdCmds)
     await vbox.vmExec(passwdCmd)
 }
 
