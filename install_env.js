@@ -43,12 +43,12 @@ async function install_kdePlasma(){
     await cmds.makeCmdPacmanUpdateSystem(vbox)
     await vbox.sleep(vbox.waitAfterCmd)
 
-    await cmds.makeCmdPacmanInstall('plasma kde-applications')
+    await cmds.makeCmdPacmanInstall('plasma kde-applications', vbox)
     await vbox.sleep(vbox.waitAfterLongCmd)
 
     await vbox.vmExec('systemctl enable sddm.service')
     await vbox.sleep(vbox.waitAfterCmd)
-    await vbox.vmExec('systemctl systemctl start sddm.service')
+    await vbox.vmExec('systemctl start sddm.service')
     await vbox.sleep(vbox.waitAfterLongCmd)
 
     vbox.vmExec('reboot')
