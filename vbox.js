@@ -158,7 +158,7 @@ export function sleep(ms){
 }
 
 export async function waitForEcho(){
-    while(!(await vmExec("echo ciao")).includes("ciao"))
+    while(!(await vmExec("echo ciao")).stdout.includes("ciao"))
         console.log("ping without pong");
 
     return 'ok'
