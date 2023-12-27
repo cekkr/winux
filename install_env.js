@@ -45,7 +45,8 @@ async function install_connection(){
 
     //await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
 
-    let ifConfigRes= await vbox.vmExec('ifconfig')
+    let ifConfigRes = await vbox.vmExec('ifconfig')
+    let ints = cmds.readIfConfig(ifConfigRes.stdout)
 
     return
 }
@@ -82,7 +83,12 @@ async function temp(){
 
     //await vbox.vmExec('setxkbmap it')
     //await vbox.vmExec("ifconfig")
+
+    let ifConfigRes = await vbox.vmExec('ifconfig')
+    let ints = cmds.readIfConfig(ifConfigRes.stdout)
+
+    return
 }
 
-install_env()
-//temp()
+//install_env()
+temp()

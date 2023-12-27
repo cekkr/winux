@@ -86,3 +86,61 @@ export function readIpLink(stdout){
 
     return res
 }
+
+export function readIfConfig(stdout){
+    let res = {}
+
+    let n = 1
+    let cur = null
+
+    function flush(){
+        if(cur && cur.name) res[cur.name] = cur
+        cur = {}
+    }
+
+    let lines = stdout.split('\n')
+
+    let l = 0
+    for(let line of lines){
+        if(line){
+            if(!line.startsWith(" ") && line.includes(':')){
+                flush()
+                cur.n = n++
+                l = 0
+            }
+
+            if(l==0){
+                let div = line.split(':')
+                cur.name = div[0]
+
+                line = div[1]
+            }
+            
+            let div = line.split(' ').filter((e)=>{return e != ''})
+
+            if(div[0]=='RX' || div[0]=='TX'){
+                let name = div.splice(0, 2).join(' ')
+                cur[name] = div.join(' ')
+            }
+            else {
+                let prop = ''
+                for(let i=0; i<div.length; i++){
+                    let d = div[i]
+
+                    if(i%2==0){
+                        prop = div[i]
+                    }
+                    else { 
+                        cur[prop] = div[i]
+                    }
+                }
+            }
+
+            l++
+        }
+    }
+
+    flush()
+
+    return res
+}
