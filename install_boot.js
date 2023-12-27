@@ -1,5 +1,4 @@
 import * as vbox from './vbox.js'
-for (const prop in vbox) eval(prop+'= vbox.'+prop) // the lazy way
   
 const waitAfterLongCmd = 5000
 
@@ -116,14 +115,14 @@ function composeInAppCommands(cmd, cmds){
 
 async function vmChrootExec(cmd){
     cmd = 'arch-chroot /mnt /bin/bash -c "'+cmd+'"'
-    await vmExec(cmd)
+    await vbox.vmExec(cmd)
 }
 
 // Example usage
 async function install_boot(){
-    await closeSessions()
+    await vbox.closeSessions()
 
-    let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
+    let res = await vbox.vmExec("cat /sys/firmware/efi/fw_platform_size")
     let hasEfi = res.stdout.startsWith('64')
 
     if(hasEfi)
@@ -132,13 +131,13 @@ async function install_boot(){
         console.log('No EFI...')
 
     // Connect to internet
-    await vmExec("ip link")
+    await vbox.vmExec("ip link")
 
     // Update time 
-    await vmExec("timedatectl")
+    await vbox.vmExec("timedatectl")
 
     // Partitions
-    let rFDisk = await vmExec("fdisk -l")
+    let rFDisk = await vbox.vmExec("fdisk -l")
     let disks = readFDiskL(rFDisk.stdout)
 
     console.log("disks: ", disks)
@@ -161,10 +160,10 @@ async function install_boot(){
 
         let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
         
-        await vmExec(cmd);
+        await vbox.vmExec(cmd);
 
-        await sleep(waitAfterLongCmd)
-        rFDisk = await vmExec("fdisk -l " + disk)
+        await vbox.sleep(waitAfterLongCmd)
+        rFDisk = await vbox.vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
 
         diskStatus = false
@@ -196,10 +195,10 @@ async function install_boot(){
 
         let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
         
-        let writeDiskRes = await vmExec(cmd);
+        let writeDiskRes = await vbox.vmExec(cmd);
 
-        await sleep(waitAfterLongCmd)
-        rFDisk = await vmExec("fdisk -l " + disk)
+        await vbox.sleep(waitAfterLongCmd)
+        rFDisk = await vbox.vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
     }
 
@@ -216,30 +215,30 @@ async function install_boot(){
 
         switch(p){
             case '0':
-                await vmExec("mkfs.fat -F 32 "+part.path)
+                await vbox.vmExec("mkfs.fat -F 32 "+part.path)
                 bootPath = part.path
                 break;
 
             case '1':
-                await vmExec("mkfs.ext4 "+part.path)
+                await vbox.vmExec("mkfs.ext4 "+part.path)
                 mainPath = part.path
                 break;
         }
     }
 
-    await sleep(waitAfterLongCmd)
-    await vmExec("mount "+mainPath+" /mnt")
-    await vmExec("mount --mkdir "+bootPath+" /mnt/boot")
+    await vbox.sleep(waitAfterLongCmd)
+    await vbox.vmExec("mount "+mainPath+" /mnt")
+    await vbox.vmExec("mount --mkdir "+bootPath+" /mnt/boot")
 
     // install linux
-    await sleep(waitAfterLongCmd)
-    let linuxRes = await vmExec("pacstrap -K /mnt base linux linux-firmware")
-    await sleep(waitAfterLongCmd)
+    await vbox.sleep(waitAfterLongCmd)
+    let linuxRes = await vbox.vmExec("pacstrap -K /mnt base linux linux-firmware")
+    await vbox.sleep(waitAfterLongCmd)
 
     // Configure the system
-    await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    await vbox.vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
 
-    //await vmExec("arch-chroot /mnt") // enters in chroot
+    //await vbox.vmExec("arch-chroot /mnt") // enters in chroot
     
     // time zone
     await vmChrootExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
@@ -254,11 +253,11 @@ async function install_boot(){
     // set keyboard
     await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
 
-    await sleep(waitAfterLongCmd)
+    await vbox.sleep(waitAfterLongCmd)
 
     // grub install
     await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
-    await sleep(waitAfterLongCmd)
+    await vbox.sleep(waitAfterLongCmd)
 
     await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
 
@@ -282,7 +281,7 @@ async function install_boot(){
 
 async function install_nodejs(){
     // Install node
-    res = await vmExec("sudo pacman -Syu --noconfirm nodejs")
+    res = await vbox.vmExec("sudo pacman -Syu --noconfirm nodejs")
     console.log("Node install res: ", res.stdout)
 }
 
@@ -295,4 +294,4 @@ async function temp(){
 install_boot()
 //temp()
 
-//closeSessions()
+//vbox.closeSessions()
