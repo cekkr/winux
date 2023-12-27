@@ -40,7 +40,7 @@ async function install_connection(){
     await vbox.sleep(vbox.waitAfterLongCmd)
 
     // Install base tools for environment recognition
-    await cmds.makeCmdPacmanInstall("which net-tools", vbox)
+    await cmds.makeCmdPacmanInstall("which net-tools iputils", vbox)
     await vbox.sleep(vbox.waitAfterCmd)
 
     //await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
@@ -76,6 +76,16 @@ async function install_env(){
     return
 }
 
+async function enableSshd(){
+    let resSshdStatus = await vbox.vmExec('systemctl status sshd')
+
+    if(resSshdStatus.stdout.includes('Active: inactive')){
+        await vbox.vmExec('systemctl start sshd')
+        await vbox.vmExec('systemctl enable sshd')
+        await vbox.sleep(vbox.waitAfterCmd)
+    }
+}
+
 async function temp(){
     //await install_connection()
 
@@ -84,8 +94,10 @@ async function temp(){
     //await vbox.vmExec('setxkbmap it')
     //await vbox.vmExec("ifconfig")
 
-    let ifConfigRes = await vbox.vmExec('ifconfig')
-    let ints = cmds.readIfConfig(ifConfigRes.stdout)
+    //let ifConfigRes = await vbox.vmExec('ifconfig')
+    //let ints = cmds.readIfConfig(ifConfigRes.stdout)
+
+    await cmds.makeCmdPacmanInstall("iputils", vbox)
 
     return
 }
