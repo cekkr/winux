@@ -27,6 +27,7 @@ function vmExec(command) {
     return new Promise((res, err)=>{   
         console.log("Executing: " + command)
         //command = command.replaceAll('"','\\"')
+        command = "echo START; "
         
         if(useSpawn){
             const args = [];
@@ -57,9 +58,25 @@ function vmExec(command) {
             const childProcess = spawn('VBoxManage', args);
 
             // Capture and display stdout
+            let started = false
             childProcess.stdout.on('data', (data) => {
-                console.log(data.toString())
-                stdout += data.toString()
+                let str = data.toString()
+                if(!started){
+                    if(str.startsWith('START')){
+                        str = str.substring(5)
+                        started = true
+                    }
+                }
+                
+                if(started){
+                    console.log(str)
+                    stdout += str
+                }
+                else {
+                    if(str){
+                        vboxManageErr(str)
+                    }
+                }
             });
 
             async function vboxManageErr(err){
