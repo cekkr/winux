@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Guest Arch Env Installer",
+            "name": "2. Launch Guest Arch Env Installer",
             "skipFiles": [
                 "<node_internals>/**"
             ],
@@ -16,7 +16,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Guest Arch Installer",
+            "name": "1. Launch Guest Arch Installer",
             "skipFiles": [
                 "<node_internals>/**"
             ],

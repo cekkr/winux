@@ -36,6 +36,8 @@ async function install_connection(){
 
     await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
 
+    await vbox.vmExec('ipconfig')
+
     return
 }
 
@@ -59,7 +61,7 @@ async function install_kdePlasma(){
 async function install_env(){
     await install_connection()
 
-    await install_kdePlasma()
+    //await install_kdePlasma()
 
     return
 }
@@ -68,7 +70,10 @@ async function temp(){
     //await install_connection()
 
     //await vbox.vmExec("rm /var/lib/pacman/db.lck")
+
+    //await vbox.vmExec('setxkbmap it')
+    //await vbox.vmExec("ifconfig")
 }
 
-//install_env()
-temp()
+install_env()
+//temp()
