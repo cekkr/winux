@@ -316,7 +316,14 @@ async function main(){
     }
 
     // install linux
-    let linuxRes = await vmExec("pacstrap -c -y -K /mnt base linux linux-firmware")
+    let linuxInstalled = (await vmExec("pacman -Q linux")).stdout.startsWith('linux')
+
+    if(!linuxInstalled){
+        let linuxRes = await vmExec("pacstrap -c -K /mnt base linux linux-firmware")
+    }
+    else {
+        console.log("Linux already installed")
+    }
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
