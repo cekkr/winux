@@ -374,10 +374,12 @@ async function install_boot(){
         }
     }
 
+    await sleep(waitAfterLongCmd)
     await vmExec("mount "+mainPath+" /mnt")
     await vmExec("mount --mkdir "+bootPath+" /mnt/boot")
 
     // install linux
+    await sleep(waitAfterLongCmd)
     let linuxRes = await vmExec("pacstrap -K /mnt base linux linux-firmware")
     await sleep(waitAfterLongCmd)
 
