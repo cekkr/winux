@@ -132,7 +132,7 @@ async function install_boot(){
         console.log('No EFI...')
 
     // Connect to internet
-    await vmExec("iplink")
+    await vmExec("ip link")
 
     // Update time 
     await vmExec("timedatectl")
@@ -272,6 +272,12 @@ async function install_boot(){
 
     let cmd = composeInAppCommands('passwd', passwdCmd)
     await vmChrootExec(cmd);
+
+    // set hostname
+    await vmChrootExec('echo "winux" > /etc/hostname')
+
+    // set hostname
+    await vmChrootExec('echo "\\n127.0.1.1 winux.localdomain winux\\n" >> /etc/hostname')
 }
 
 async function install_nodejs(){
