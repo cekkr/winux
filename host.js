@@ -1,6 +1,6 @@
-const { exec, child } = require('child_process');
+const { exec, spawn } = require('child_process');
 
-const useChild = true
+const useSpawn = true
 
 const vmName = "Arch Linux"; // Replace with your VM's name
 let bashPath = '/bin/bash'
@@ -12,69 +12,80 @@ function vmExec(command) {
         console.log("Executing: " + command)
         command = command.replaceAll('"','\\"')
         
-        if(useChild){
-            const command = 'VBoxManage';
+        if(useSpawn){
             const args = [];
             args.push('guestcontrol')
-            args.push('"Arch Linux"')
+            args.push('Arch Linux')
             args.push('run')
 
             args.push('--exe')
-            args.push('"'+basePath+'"')
+            args.push(bashPath)
 
             args.push('--username')
-            args.push('"root"')
+            args.push('root')
 
             args.push('--password')
-            args.push('""')
+            args.push('')
 
             args.push('--wait-stderr')
             args.push('--wait-stdout')
 
             args.push('--')
             args.push('-c')
-            args.push('"'+command+'"')
+            args.push(command)
             
             let stdout = ''
             let stderr = ''
 
             // Spawn the child process
-            const childProcess = spawn(command, args);
+            const childProcess = spawn('VBoxManage', args);
 
             // Capture and display stdout
             childProcess.stdout.on('data', (data) => {
+                console.log(data.toString())
                 stdout += data.toString()
             });
 
             // Capture and display stderr
             childProcess.stderr.on('data', (data) => {
+                console.error(data.toString())
                 stderr += data.toString()
             });
 
+            function vboxManageErr(err){
+                console.error(`VBoxManager process error: ${err}`);
+                console.warn("Retry VBox command")
+
+                if(cmdAttempt++ == 3){
+                    if(!bashPath.startsWith('/usr')){
+                        bashPath = '/usr'+bashPath
+                        console.log("moving to /usr/bin/")
+                    }
+                }
+
+                setTimeout(()=>{
+                    (async ()=>{
+                        let r = await vmExec(command)
+                        res(r)
+                    })()
+                }, 250);
+            }
+
             // Handle process exit
             childProcess.on('close', (code) => {
+                if(stderr.startsWith('VBoxManage'))
+                    return vboxManageErr(stderr)
+
                 cmdAttempt = 0
-                res({stdout, stderr})
+
+                setTimeout(()=>{
+                    res({stdout, stderr})
+                }, 100);
             });
 
             childProcess.on('error', (err) => {
                 if(!stderr && !stdout){
-                    console.error(`VBoxManager process error: ${err.message}`);
-                    console.warn("Retry VBox command")
-
-                    if(cmdAttempt++ == 3){
-                        if(!bashPath.startsWith('/usr')){
-                            bashPath = '/usr'+bashPath
-                            console.log("moving to /usr/bin/")
-                        }
-                    }
-
-                    setTimeout(()=>{
-                        (async ()=>{
-                            let r = await vmExec(command)
-                            res(r)
-                        })()
-                    }, 250);
+                    vboxManageErr(err.message)
                 }
             });
         }
@@ -305,18 +316,18 @@ async function main(){
     }
 
     // install linux
-    let linuxRes = vmExec("pacstrap -c -K /mnt base linux linux-firmware")
+    let linuxRes = await vmExec("pacstrap -c -y -K /mnt base linux linux-firmware")
 
     // Configure the system
-    vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
-    vmExec("arch-chroot /mnt")
+    await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
+    await vmExec("arch-chroot /mnt")
     
     // time zone
-    vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
-    vmExec("hwclock --systohc")
+    await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
+    await vmExec("hwclock --systohc")
 
     // locale
-    vmExec("locale-gen")
+    await vmExec("locale-gen")
 
     return
     // Install node
