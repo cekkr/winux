@@ -242,7 +242,7 @@ async function closeSessions(){
 }
 
 async function vmChrootExec(cmd){
-    cmd = 'arch-chroot /mnt /usr/bin/zsh -c "'+cmd+'"'
+    cmd = 'arch-chroot /mnt /bin/bash -c "'+cmd+'"'
     await vmExec(cmd)
 }
 
@@ -302,7 +302,7 @@ async function install_boot(){
         
         let writeDiskRes = await vmExec(cmd);
 
-        await sleep(1000)
+        await sleep(5000)
         rFDisk = await vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
     }
@@ -336,6 +336,7 @@ async function install_boot(){
 
     // install linux
     let linuxRes = await vmExec("pacstrap -K /mnt base linux linux-firmware")
+    await sleep(5000)
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
@@ -373,13 +374,6 @@ async function install_nodejs(){
 }
 
 async function temp(){
-    await closeSessions()
-
-    // grub install
-    await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
-    
-    await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
-
     await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
 }
 
