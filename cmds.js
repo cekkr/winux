@@ -1,4 +1,8 @@
 
+export function makeCmdPacmanInstall(packages){
+    return 'pacman -Syu --noconfirm ' + packages
+}
+
 export function readIpLink(stdout){
     let res = {}
 
