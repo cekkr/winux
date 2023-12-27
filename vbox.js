@@ -1,5 +1,10 @@
 import { exec, spawn } from 'child_process';
 
+const vmName = "Arch Linux"; // Replace with your VM's name
+
+export const waitAfterLongCmd = 10000
+export const waitAfterCmd = 2000
+
 const useSpawn = true
 
 export let props = {
@@ -7,10 +12,6 @@ export let props = {
     password: '',
     bashPath: '/usr/bin/zsh'
 }
-
-const vmName = "Arch Linux"; // Replace with your VM's name
-
-const waitAfterCmd = 2000
 
 export function vboxManage(cmd){
     return new Promise((res, err)=>{   

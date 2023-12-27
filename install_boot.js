@@ -1,7 +1,7 @@
 import * as vbox from './vbox.js'
 import * as cmds from './cmds.js'
   
-const waitAfterLongCmd = 10000
+const waitAfterLongCmd = vbox.waitAfterLongCmd
 
 function readFDiskL(stdout){
     let lines = stdout.split('\n')
@@ -233,6 +233,7 @@ async function install_boot(){
 
     await vbox.sleep(waitAfterLongCmd)
     await vbox.vmExec("mount "+mainPath+" /mnt")
+    await vbox.sleep(vbox.waitAfterCmd)
     await vbox.vmExec("mount --mkdir "+bootPath+" /mnt/boot")
 
     // install linux
@@ -287,7 +288,7 @@ async function install_boot(){
     // dns
     await vmChrootExec('systemctl enable --now systemd-resolved.service')  
     await vmChrootExec('echo -e "[Resolve]\\nDNS=8.8.8.8 8.8.4.4\\n" > /etc/systemd/resolved.conf')
-
+    await vbox.vmExec('systemctl restart systemd-networkd')
     
     // install virtualbox
     await vmChrootExec("pacman -Syu --noconfirm virtualbox-guest-utils")
