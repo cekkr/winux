@@ -108,6 +108,19 @@ async function checkDiskStatus(disk){
     return lines.length == 5
 }
 
+function composeInAppCommands(cmd, cmds){
+    let res = '('
+
+    for(let c of cmds){
+        res += 'echo -e "'+c+'";'
+        res += 'sleep 0.25;'
+    }
+
+    res += ') | ' + cmd 
+
+    return res
+}
+
 // Example usage
 async function main(){
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
@@ -136,30 +149,36 @@ async function main(){
 
     // Create partitions:
     if(!diskStatus){
+        console.log("Writing partitions...")
+
         let fdiskCmds = [
             'n',
             'p',
-            '\\n', // partition number
-            '\\n', // first sector
+            '', // partition number
+            '', // first sector
             '+500M', // last sector
 
             'n',
             'p',
-            '\\n', // partition number
-            '\\n', // first sector
-            '\\n', // rest of partitions
+            '', // partition number
+            '', // first sector
+            '', // rest of partitions
 
             'p', // print
             'w', // write
         ]
 
-        let fdiskCmdsSeries = fdiskCmds.join('\\n')
-        let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk -w /dev/sda'
+        //let fdiskCmdsSeries = fdiskCmds.join('\\n')
+        //let cmd = 'echo -e "'+fdiskCmdsSeries+'" | fdisk ' + disk
 
-        await vmExec(cmd);
+        let cmd = composeInAppCommands('fdisk '+disk, fdiskCmds)
+        
+        let writeDiskRes = await vmExec(cmd);
     }
 
     // retrieve disks
+    rFDisk = await vmExec("fdisk -l " + disk)
+    disks = readFDiskL(rFDisk.stdout)
 
     return
     // Install node
