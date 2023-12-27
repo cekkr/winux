@@ -224,7 +224,7 @@ function composeInAppCommands(cmd, cmds){
 }
 
 // Example usage
-async function main(){
+async function install_write(){
     let res = await vmExec("cat /sys/firmware/efi/fw_platform_size")
     let hasEfi = res.stdout.startsWith('64')
 
@@ -308,7 +308,11 @@ async function main(){
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
     await vmExec("arch-chroot /mnt")
-    
+
+    await install_configure()
+}
+
+async function install_configure(){
     // time zone
     await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
     await vmExec("hwclock --systohc")
@@ -316,10 +320,16 @@ async function main(){
     // locale
     await vmExec("locale-gen")
 
+    // set language
+    await vmExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
+
+    // set keyboard
+    await vmExec('echo "KEYMAP=it" > /etc/locale.conf')
+
     return
     // Install node
     res = await vmExec("sudo pacman -Syu --noconfirm nodejs")
     console.log("Node install res: ", res.stdout)
 }
 
-main()
+install_configure()
