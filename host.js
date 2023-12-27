@@ -5,6 +5,9 @@ const useSpawn = true
 const vmName = "Arch Linux"; // Replace with your VM's name
 let bashPath = '/usr/bin/zsh'
 
+const waitAfterCmd = 2000
+const waitAfterLongCmd = 5000
+
 function vboxManage(cmd){
     return new Promise((res, err)=>{   
         const vboxCommand = `VBoxManage guestcontrol "${vmName}" ${cmd}`;
@@ -79,7 +82,7 @@ function vmExec(command) {
                         let r = await vmExec(command)
                         res(r)
                     })()
-                }, 250);
+                }, waitAfterCmd/2);
             }
 
             // Handle process exit
@@ -92,7 +95,7 @@ function vmExec(command) {
 
                 setTimeout(()=>{
                     res({stdout, stderr})
-                }, 250);
+                }, waitAfterCmd);
             });
 
             // Capture and display stderr
@@ -217,7 +220,7 @@ function composeInAppCommands(cmd, cmds){
 
     for(let c of cmds){
         res += 'echo -e "'+c+'";'
-        res += 'sleep 0.25;'
+        res += 'sleep 0.5;'
     }
 
     res += ') | ' + cmd 
@@ -302,7 +305,7 @@ async function install_boot(){
         
         let writeDiskRes = await vmExec(cmd);
 
-        await sleep(5000)
+        await sleep(waitAfterLongCmd)
         rFDisk = await vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
     }
@@ -336,7 +339,7 @@ async function install_boot(){
 
     // install linux
     let linuxRes = await vmExec("pacstrap -K /mnt base linux linux-firmware")
-    await sleep(5000)
+    await sleep(waitAfterLongCmd)
 
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
@@ -356,15 +359,24 @@ async function install_boot(){
     // set keyboard
     await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
 
-    await sleep(10000)
+    await sleep(waitAfterLongCmd)
 
     // grub install
     await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
-    await sleep(5000)
+    await sleep(waitAfterLongCmd)
 
     await vmChrootExec("grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB")
 
     await vmChrootExec("grub-mkconfig -o /boot/grub/grub.cfg")
+
+    // Set root password
+    let passwdCmd = [
+        'admin',
+        'admin'
+    ]
+
+    let cmd = composeInAppCommands('passwd', passwdCmd)
+    await vmChrootExec(cmd);
 }
 
 async function install_nodejs(){
@@ -379,7 +391,7 @@ async function temp(){
 
 //todo: /dev/sda is not obtained but costant
 
-//install_boot()
-temp()
+install_boot()
+//temp()
 
 //closeSessions()
