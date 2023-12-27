@@ -18,9 +18,28 @@ async function install_env(){
         }
     }
 
+    await vbox.vmExec('ip addr add 10.0.2.15/24 dev '+chosenInt)
+
     await vbox.vmExec("ip link set "+chosenInt+" up")
+
+    await vbox.vmExec("ip route add default via 10.0.2.1")
+
+    // DHCP
+    await vbox.vmExec('echo -e "[Resolve]\\nName='+chosenInt+'\\n\\n[Network]\\nDHCP=yes\\n" > /etc/systemd/network/20-wired.network')
+    await vbox.vmExec('systemctl restart systemd-networkd')
+
+    // DNS
+    let resolv = await vbox.vmExec("cat /etc/resolv.conf")
+    if(!resolv.stdout.includes("8.8.8.8")){
+        await vbox.vmExec('echo -e "\\nnameserver 8.8.8.8\\n" >> /etc/resolv.conf')
+    }
 
     return
 }
 
+async function temp(){
+
+}
+
 install_env()
+//temp()

@@ -255,10 +255,10 @@ async function install_boot(){
     await vbox.sleep(waitAfterLongCmd)
 
     // set language
-    await vmChrootExec('echo "LANG=en_US.UTF-8" > /etc/locale.conf')
+    await vmChrootExec('echo -e "LANG=en_US.UTF-8" > /etc/locale.conf')
 
     // set keyboard
-    await vmChrootExec('echo "KEYMAP=it" > /etc/locale.conf')
+    await vmChrootExec('echo -e "KEYMAP=it" > /etc/locale.conf')
 
     // grub install
     await vmChrootExec('pacman -S --noconfirm grub efibootmgr')
@@ -279,14 +279,14 @@ async function install_boot(){
     await vmChrootExec(cmd);
 
     // set hostname
-    await vmChrootExec('echo "winux" > /etc/hostname')
+    await vmChrootExec('echo -e "winux" > /etc/hostname')
 
     // set hostname
-    await vmChrootExec('echo "\\n127.0.1.1 winux.localdomain winux\\n" >> /etc/hosts')
+    await vmChrootExec('echo -e "\\n127.0.1.1 winux.localdomain winux\\n" >> /etc/hosts')
 
     // dns
     await vmChrootExec('systemctl enable --now systemd-resolved.service')  
-    await vmChrootExec('echo "[Resolve]\\nDNS=8.8.8.8 8.8.4.4\\n" > /etc/systemd/resolved.conf')
+    await vmChrootExec('echo -e "[Resolve]\\nDNS=8.8.8.8 8.8.4.4\\n" > /etc/systemd/resolved.conf')
 
     
     // install virtualbox
