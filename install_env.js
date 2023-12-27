@@ -5,6 +5,8 @@ vbox.props.password = 'admin'
 vbox.props.bashPath = '/bin/bash'
 
 async function install_connection(){
+    await vbox.waitForEcho()
+
     let res = await vbox.vmExec("ip link")
     let interfaces = cmds.readIpLink(res.stdout)
 
@@ -28,15 +30,22 @@ async function install_connection(){
 
     // Set up virtual network
     await vbox.vmExec("ip link set "+chosenInt+" up")
+
     await vbox.vmExec('ip addr add 10.0.2.15/24 dev '+chosenInt)
-    await vbox.vmExec("ip route add default via 10.0.2.1")
+    await vbox.sleep(vbox.waitAfterCmd)
+
+    await vbox.vmExec("ip route add default via 10.0.2.1") // add gateway
+
+    await vbox.vmExec("ip link set "+chosenInt+" up") // up again
+    await vbox.sleep(vbox.waitAfterLongCmd)
 
     // Install base tools for environment recognition
-    await cmds.makeCmdPacmanInstall("which net-tools")
+    await cmds.makeCmdPacmanInstall("which net-tools", vbox)
+    await vbox.sleep(vbox.waitAfterCmd)
 
-    await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
+    //await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
 
-    await vbox.vmExec('ipconfig')
+    let ifConfigRes= await vbox.vmExec('ifconfig')
 
     return
 }
