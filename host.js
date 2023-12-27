@@ -5,6 +5,22 @@ const useSpawn = true
 const vmName = "Arch Linux"; // Replace with your VM's name
 let bashPath = '/bin/bash'
 
+function vboxManage(cmd){
+    return new Promise((res, err)=>{   
+        const vboxCommand = `VBoxManage guestcontrol "${vmName}" ${cmd}`;
+        exec(vboxCommand, (error, stdout, stderr) => {
+
+            if(stderr) console.error(stderr)
+            if(stdout) console.log(stdout)
+
+            if(error)
+                throw error
+
+            res()
+        });
+    })
+}
+
 // Function to execute a command in the VM
 let cmdAttempt = 0
 function vmExec(command) {      
@@ -15,7 +31,7 @@ function vmExec(command) {
         if(useSpawn){
             const args = [];
             args.push('guestcontrol')
-            args.push('Arch Linux')
+            args.push(vmName)
             args.push('run')
 
             args.push('--exe')
@@ -53,6 +69,10 @@ function vmExec(command) {
             });
 
             function vboxManageErr(err){
+
+                if(err.includes("Maximum number of concurrent guest sessions"))
+                    vboxManage("closesession -all")
+
                 console.error(`VBoxManager process error: ${err}`);
                 console.warn("Retry VBox command")
 
@@ -86,39 +106,6 @@ function vmExec(command) {
             childProcess.on('error', (err) => {
                 if(!stderr && !stdout){
                     vboxManageErr(err.message)
-                }
-            });
-        }
-        else {
-            const vboxCommand = `VBoxManage guestcontrol "Arch Linux" run --exe "${bashPath}" --username "root" --password "" --wait-stderr --wait-stdout -- -c "${command}"`;
-            exec(vboxCommand, (error, stdout, stderr) => {
-
-                if(stderr) console.error(stderr)
-                if(stdout) console.log(stdout)
-
-                if ((!stdout && !stderr) && error) {
-                        //‘/bin/bash’: No such file or directory
-                        console.warn("Retry VBox command")
-
-                        if(cmdAttempt++ == 3){
-                            if(!bashPath.startsWith('/usr')){
-                                bashPath = '/usr'+bashPath
-                                console.log("moving to /usr/bin/")
-                            }
-                        }
-
-                        setTimeout(()=>{
-                            (async ()=>{
-                                let r = await vmExec(command)
-                                res(r)
-                            })()
-                        }, 250);
-                }
-                else {
-                    cmdAttempt = 0
-                    setTimeout(()=>{
-                        res({stdout, stderr});
-                    }, 100);
                 }
             });
         }
