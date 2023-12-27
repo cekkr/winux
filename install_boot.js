@@ -165,7 +165,7 @@ async function install_boot(){
         await vbox.sleep(waitAfterLongCmd)
         rFDisk = await vbox.vmExec("fdisk -l " + disk)
         disks = readFDiskL(rFDisk.stdout)
-        
+
         await vbox.sleep(waitAfterLongCmd)
 
         diskStatus = false
@@ -278,7 +278,11 @@ async function install_boot(){
     await vmChrootExec('echo "winux" > /etc/hostname')
 
     // set hostname
-    await vmChrootExec('echo "\\n127.0.1.1 winux.localdomain winux\\n" >> /etc/hostname')
+    await vmChrootExec('echo "\\n127.0.1.1 winux.localdomain winux\\n" >> /etc/hosts')
+
+    // dns
+    await vmChrootExec('systemctl enable --now systemd-resolved.service')  
+    await vmChrootExec('echo "[Resolve]\\nDNS=8.8.8.8 8.8.4.4\\n" > /etc/systemd/resolved.conf')
 }
 
 async function install_nodejs(){
