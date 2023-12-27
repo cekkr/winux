@@ -43,7 +43,7 @@ async function install_kdePlasma(){
     await cmds.makeCmdPacmanUpdateSystem(vbox)
     await vbox.sleep(vbox.waitAfterCmd)
 
-    await cmds.makeCmdPacmanInstall('plasma kde-applications', vbox)
+    await cmds.makeCmdPacmanInstall('plasma kde-applications sddm', vbox)
     await vbox.sleep(vbox.waitAfterLongCmd)
 
     await vbox.vmExec('systemctl enable sddm.service')
@@ -63,7 +63,9 @@ async function install_env(){
 }
 
 async function temp(){
-    install_kdePlasma()
+    //await install_connection()
+
+    //await vbox.vmExec("rm /var/lib/pacman/db.lck")
 }
 
 //install_env()
