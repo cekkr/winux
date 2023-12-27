@@ -358,7 +358,9 @@ async function install_nodejs(){
 async function temp(){
     // Configure the system
     await vmExec("genfstab -U /mnt >> /mnt/etc/fstab")
-    await vmExec("arch-chroot /mnt /bin/bash")
+
+    //await vmExec("arch-chroot /mnt /bin/bash")
+    await vmExec('script -q -c "arch-chroot /mnt" /dev/null')
 
     // time zone
     await vmExec("ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime")
