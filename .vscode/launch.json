@@ -7,11 +7,20 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Host Arch Installer",
+            "name": "Launch Guest Arch Env Installer",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\host.js"
+            "program": "${workspaceFolder}\\install_env.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Guest Arch Installer",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\install_boot.js"
         }
     ]
 }
