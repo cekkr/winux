@@ -1,6 +1,7 @@
 import { exec, spawn } from 'child_process';
+import * as config from './config.js'
 
-const vmName = "ArchLinux"; // Replace with your VM's name
+const vmName = config.VMName; // Replace with your VM's name
 
 export const waitAfterLongCmd = 5000
 export const waitAfterCmd = 1000

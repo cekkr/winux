@@ -92,6 +92,7 @@ async function install_env(){
     await install_connection()
 
     await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
+    await enableSudo()
     await enableSshd()
 
     //await install_kdePlasma()
@@ -112,11 +113,10 @@ async function enableSshd(){
     
         await vbox.vmExec('echo -e "\\nPort 22\\n" >> /etc/ssh/sshd_config')
         await vbox.vmExec('echo -e "PasswordAuthentication yes\\n" >> /etc/ssh/sshd_config')
-        //await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
         await vbox.vmExec('echo -e "AllowUsers user\\n" >> /etc/ssh/sshd_config')
         await vbox.vmExec('echo -e "AllowGroups wheel\\n" >> /etc/ssh/sshd_config')
-        await vbox.vmExec('systemctl restart sshd')
 
+        //await vbox.vmExec('systemctl restart sshd')
         await vbox.vmExec('systemctl start sshd')
         await vbox.vmExec('systemctl enable sshd')
         await vbox.sleep(vbox.waitAfterCmd)
