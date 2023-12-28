@@ -65,10 +65,8 @@ async function install_connection(){
     await connectToVMNetwork(chosenInt)
 
     // Install base tools for environment recognition
-    await cmds.makeCmdPacmanInstall("which net-tools iputils", vbox)
+    await cmds.makeCmdPacmanInstall("which net-tools", vbox)
     await vbox.sleep(vbox.waitAfterCmd)
-
-    //await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
 
     return
 }
@@ -104,7 +102,7 @@ async function install_env(){
 async function enableSshd(){
     let resSshdStatus = await vbox.vmExec('systemctl status sshd')
 
-    if(resSshdStatus.stdout.includes('Active: inactive') || true){
+    if(resSshdStatus.stdout.includes('Active: inactive')){
         
         let defSshd = await vbox.vmExec('ls /etc/ssh/sshd_config.default')
         if(!defSshd.stdout)
@@ -146,10 +144,8 @@ async function temp(){
 
     //await connectToVMNetwork()
 
-    await enableSudo()
-
     return
 }
 
-//install_env()
-temp()
+install_env()
+//temp()
