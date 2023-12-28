@@ -21,6 +21,16 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\1.install_boot.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "SSH",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\ssh.js"
         }
+
     ]
 }
