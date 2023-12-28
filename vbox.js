@@ -2,8 +2,8 @@ import { exec, spawn } from 'child_process';
 
 const vmName = "ArchLinux"; // Replace with your VM's name
 
-export const waitAfterLongCmd = 10000
-export const waitAfterCmd = 2000
+export const waitAfterLongCmd = 5000
+export const waitAfterCmd = 1000
 
 const useSpawn = true
 
@@ -122,13 +122,12 @@ export function vmExec(command) {
                 if(stderr.startsWith('VBoxManage'))
                     return vboxManageErr(stderr)
 
-                if(!ended){
-                    return vboxManageErr("NOT REALLY ENDED")
-                }
-
-                cmdAttempt = 0
-
                 setTimeout(()=>{
+                    if(!ended){
+                        return vboxManageErr("NOT REALLY ENDED")
+                    }
+
+                    cmdAttempt = 0
                     res({stdout, stderr})
                 }, waitAfterCmd);
             });

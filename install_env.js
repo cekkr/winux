@@ -93,6 +93,9 @@ async function install_kdePlasma(){
 async function install_env(){
     await install_connection()
 
+    await cmds.makeCmdCreateUser(vbox, 'user', 'pass')
+    await enableSshd()
+
     //await install_kdePlasma()
 
     return
@@ -101,17 +104,31 @@ async function install_env(){
 async function enableSshd(){
     let resSshdStatus = await vbox.vmExec('systemctl status sshd')
 
-    if(resSshdStatus.stdout.includes('Active: inactive')){
+    if(resSshdStatus.stdout.includes('Active: inactive') || true){
+        
+        let defSshd = await vbox.vmExec('ls /etc/ssh/sshd_config.default')
+        if(!defSshd.stdout)
+            await vbox.vmExec('cp /etc/ssh/sshd_config /etc/ssh/sshd_config.default')
+        else
+            await vbox.vmExec('cp /etc/ssh/sshd_config.default /etc/ssh/sshd_config')
+    
         await vbox.vmExec('echo -e "\\nPort 22\\n" >> /etc/ssh/sshd_config')
         await vbox.vmExec('echo -e "PasswordAuthentication yes\\n" >> /etc/ssh/sshd_config')
-        await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
-        await vbox.vmExec('echo -e "AllowUsers root\\n" >> /etc/ssh/sshd_config')
+        //await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('echo -e "AllowUsers user\\n" >> /etc/ssh/sshd_config')
         await vbox.vmExec('echo -e "AllowGroups wheel\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('systemctl restart sshd')
 
         await vbox.vmExec('systemctl start sshd')
         await vbox.vmExec('systemctl enable sshd')
         await vbox.sleep(vbox.waitAfterCmd)
     }
+}
+
+async function enableSudo(){
+    await cmds.makeCmdPacmanInstall('sudo', vbox)
+    await vbox.sleep(vbox.waitAfterCmd)
+    await vbox.vmExec('echo -e "username ALL=(ALL) ALL" > /etc/sudoers')
 }
 
 async function temp(){
@@ -129,12 +146,7 @@ async function temp(){
 
     //await connectToVMNetwork()
 
-    await vbox.vmExec('echo -e "\\nPort 22\\n" >> /etc/ssh/sshd_config')
-    await vbox.vmExec('echo -e "PasswordAuthentication yes\\n" >> /etc/ssh/sshd_config')
-    await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
-    await vbox.vmExec('echo -e "AllowUsers root\\n" >> /etc/ssh/sshd_config')
-    await vbox.vmExec('echo -e "AllowGroups wheel\\n" >> /etc/ssh/sshd_config')
-    await vbox.vmExec('systemctl restart sshd')
+    await enableSudo()
 
     return
 }
