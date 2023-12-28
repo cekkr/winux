@@ -128,7 +128,7 @@ async function enableSshd(){
 async function enableSudo(){
     await cmds.makeCmdPacmanInstall('sudo', vbox)
     await vbox.sleep(vbox.waitAfterCmd)
-    await vbox.vmExec('echo -e "username ALL=(ALL) ALL" > /etc/sudoers')
+    await vbox.vmExec('echo -e "username ALL=(ALL) ALL\\n%wheel ALL=(ALL) ALL" > /etc/sudoers')
 }
 
 async function temp(){
