@@ -30,11 +30,11 @@ export function vboxManage(cmd){
 let cmdAttempt = 0
 export function vmExec(command) {      
     return new Promise((res, err)=>{   
-        console.log("Executing: " + command)
         //command = command.replaceAll('"','\\"')
 
         if(!command.startsWith("echo START; ")){
             command = "echo START; " + command + "; echo BYEBYEND"
+            console.log("Executing: " + command)
         }
         
         if(useSpawn){
@@ -75,11 +75,11 @@ export function vmExec(command) {
                         str = str.substring(6)
                         started = true
                     }
+                }
 
-                    if(str.endsWith('BYEBYEND')){
-                        ended = true
-                        str = str.substring(0, str.length - 8)
-                    }
+                if(str.endsWith('BYEBYEND\n')){
+                    ended = true
+                    str = str.substring(0, str.length - 9)
                 }
                 
                 if(started){

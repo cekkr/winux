@@ -11,7 +11,6 @@ async function connectToVMNetwork(chosenInt=null){
         let res = await vbox.vmExec("ip link")
         let interfaces = cmds.readIpLink(res.stdout)
 
-        let chosenInt = null
         for(let int in interfaces){
             if(int.startsWith('en')){
                 chosenInt = int 
@@ -23,10 +22,10 @@ async function connectToVMNetwork(chosenInt=null){
     // Set up virtual network
     await vbox.vmExec("ip link set "+chosenInt+" up")
 
-    await vbox.vmExec('ip addr add 10.0.2.15/24 dev '+chosenInt)
+    await vbox.vmExec('ip addr add 192.168.137.10/24 dev '+chosenInt)
     await vbox.sleep(vbox.waitAfterCmd)
 
-    await vbox.vmExec("ip route add default via 10.0.2.1") // add gateway
+    await vbox.vmExec("ip route add default via 192.168.137.1") // add gateway
 
     await vbox.vmExec("ip link set "+chosenInt+" up") // up again
     await vbox.sleep(vbox.waitAfterLongCmd)
@@ -103,6 +102,12 @@ async function enableSshd(){
     let resSshdStatus = await vbox.vmExec('systemctl status sshd')
 
     if(resSshdStatus.stdout.includes('Active: inactive')){
+        await vbox.vmExec('echo -e "\\nPort 22\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('echo -e "PasswordAuthentication yes\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('echo -e "AllowUsers root\\n" >> /etc/ssh/sshd_config')
+        await vbox.vmExec('echo -e "AllowGroups wheel\\n" >> /etc/ssh/sshd_config')
+
         await vbox.vmExec('systemctl start sshd')
         await vbox.vmExec('systemctl enable sshd')
         await vbox.sleep(vbox.waitAfterCmd)
@@ -122,7 +127,14 @@ async function temp(){
 
     //await cmds.makeCmdPacmanInstall("iputils", vbox)
 
-    await connectToVMNetwork()
+    //await connectToVMNetwork()
+
+    await vbox.vmExec('echo -e "\\nPort 22\\n" >> /etc/ssh/sshd_config')
+    await vbox.vmExec('echo -e "PasswordAuthentication yes\\n" >> /etc/ssh/sshd_config')
+    await vbox.vmExec('echo -e "PermitRootLogin yes\\n" >> /etc/ssh/sshd_config')
+    await vbox.vmExec('echo -e "AllowUsers root\\n" >> /etc/ssh/sshd_config')
+    await vbox.vmExec('echo -e "AllowGroups wheel\\n" >> /etc/ssh/sshd_config')
+    await vbox.vmExec('systemctl restart sshd')
 
     return
 }
