@@ -1,5 +1,5 @@
 import { exec, spawn } from 'child_process';
-import * as config from './config.js'
+import * as config from '../config.js'
 
 const vmName = config.VMName; // Replace with your VM's name
 

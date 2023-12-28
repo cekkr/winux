@@ -1,5 +1,5 @@
-import * as vbox from './vbox.js'
-import * as cmds from './cmds.js'
+import * as vbox from './libs/vbox.js'
+import * as cmds from './libs/cmds.js'
   
 const waitAfterLongCmd = vbox.waitAfterLongCmd
 

@@ -1,5 +1,7 @@
 import {Client} from 'ssh2'
+
 import * as config from './config.js'
+import * as installedBoot from './libs/installedBoot.js'
 
 const conn = new Client();
 const sshConfig = {
