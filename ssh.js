@@ -13,13 +13,20 @@ const sshConfig = {
   password: 'pass' // or use privateKey for key-based authentication
 };
 
+function strRemLastN(str){
+    if(str.endsWith('\n'))
+        return str.substring(0, str.length-1)
+
+    return str
+}
+
 let msgNo = 0
 let sudoSu = 0
 
 let sentCmd = false
 ssh.cmd = (cmd)=>{
     sentCmd = true
-    console.log("SSH Sent: ", cmd)
+    console.log("SSH Send: ", cmd)
 
     ssh.sentTime = Date.now()
 
@@ -30,20 +37,36 @@ ssh.cmd = (cmd)=>{
 
     return new Promise((res, err)=>{  
         ssh.endCmd = () =>{
-            res({stdout: ssh.stdout, stderr: ssh.stderr})
+            ssh.endCmd = null
+
+            let out = strRemLastN(ssh.stdout)
+            let err = strRemLastN(ssh.stderr)
+
             ssh.stdout = ''
             ssh.stderr = ''
-            ssh.endCmd = null
+
+            res({stdout: out, stderr: err})
         }
     })
 }
 
+ssh.checkEnd = ()=>{
+    clearTimeout(ssh.endTimeout)
+    ssh.endTimeout = setTimeout(
+        ()=>{
+            if(ssh.endCmd) ssh.endCmd()
+        }, (ssh.ping*2)+100
+    )
+}
+
 ssh.out = (out)=>{
     ssh.stdout += out + '\n'
+    ssh.checkEnd()
 }
 
 ssh.err = (out)=>{
     ssh.stderr += out
+    ssh.checkEnd()
 }
 
 conn.on('ready', () => {
@@ -72,29 +95,29 @@ conn.on('ready', () => {
                 }
                 else {
                     if(line.includes('winux') && (line.endsWith(']$ ') || line.endsWith(']# '))){
-                        if(ssh.endCmd) ssh.endCmd()
+                        if(sudoSu == 2){
+                            console.log('(SUDO SU READY)')
+                            ssh.ready = true 
+                            if(ssh.onReady) ssh.onReady()
+                            sudoSu = 3
+                        }
+                        else {
+                            if(ssh.endCmd) ssh.endCmd()
+                        }
+
                         continue
                     }
 
                     if(!sentCmd){
-                        if(sudoSu >= 2){
-                            if(line)
-                                console.log(line)
-                            
+                        if(line){
                             if(sudoSu == 3){
-                                //console.log("(RESPONSE)")
+                                console.log(line)  
                                 ssh.out(line)
                             }
-                            else if(sudoSu == 2){
-                                console.log('(SUDO SU READY)')
-                                ssh.ready = true 
-                                if(ssh.onReady) ssh.onReady()
-                                sudoSu = 3
+                            else if(sudoSu == 1){
+                                ssh.cmd('pass')
+                                sudoSu = 2
                             }
-                        }
-                        else if(sudoSu == 1){
-                            ssh.cmd('pass')
-                            sudoSu = 2
                         }
                     }
                     else {
@@ -121,6 +144,7 @@ conn.on('ready', () => {
     });
 }).connect(sshConfig);
 
-ssh.onReady = ()=>{
-    ssh.cmd('echo ciao')
+ssh.onReady = async ()=>{
+    let res = await ssh.cmd('echo ciao')
+    console.log('req res ', res)
 }
