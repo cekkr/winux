@@ -25,11 +25,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "SSH",
+            "name": "3. SSH Installing",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\ssh.js"
+            "program": "${workspaceFolder}\\3.ssh_install.js"
         }
 
     ]
