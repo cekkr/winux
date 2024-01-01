@@ -23,3 +23,25 @@ Yes, in Arch Linux, you can easily find out which files were installed by a pack
     This command will create a file named `vim_installed_files.txt` containing the list of files installed by the `vim` package.
 
 Remember to replace `vim` with the actual package name you're interested in. This method works for any package installed through `pacman` in Arch Linux.
+
+
+# Just a pacman upgrade
+It is not necessary to perform a fresh installation of Arch Linux to upgrade it. Arch Linux follows a rolling release model, which means you can continuously update and upgrade your existing installation without the need for periodic reinstallations.
+
+To keep your Arch Linux system up to date, you can use the package manager `pacman` to update the packages on your system. You should regularly run the following commands to update your system:
+
+1. Update package databases and upgrade installed packages:
+
+```bash
+sudo pacman -Syu
+```
+
+2. If there are configuration file conflicts during updates, `pacman` will prompt you to resolve them.
+
+3. Additionally, you may want to periodically clean up old package cache files to save disk space:
+
+```bash
+sudo pacman -Sc
+```
+
+Make sure to read any news or announcements on the Arch Linux website or forum before performing updates, as sometimes manual intervention or package-specific instructions may be required during the upgrade process. Keeping your system up to date is important to ensure it stays secure and receives the latest software updates.
