@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "bassh": "^0.0.2",
+    "ping": "^0.4.4",
     "ssh2": "^1.15.0"
   }
 }
