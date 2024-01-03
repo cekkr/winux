@@ -22,11 +22,11 @@ function startBassh(){
 
     bassh.verbose = true
 
-    async function pacmanInstallIfNotExists(pack){
+    async function pacmanInstallIfNotExists(pack, checkUpgrade = true){
         let checkRes = await bassh.cmd('pacman -Ql '+pack)
 
-        if(checkRes.stdout.includes('was not found')){
-            let instRes = bassh.cmd('pacman -Sy --noconfirm '+pack)
+        if(checkUpgrade || checkRes.stdout.includes('was not found')){
+            let instRes = bassh.cmd('pacman -Syu --noconfirm '+pack)
 
             instRes.out = async (out)=>{
                 console.log("Install stdout: ", out)
