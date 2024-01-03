@@ -65,9 +65,11 @@ function startBassh(){
         // Unlock pacman from previous operations
         let res = await bassh.cmd('rm /var/lib/pacman/db.lck')
 
+        // Git
+        res = await pacmanInstallIfNotExists("git")
+
         // Archiso
         res = await pacmanInstallIfNotExists("archiso")
-        console.log("archiso install: ", res)
 
         // Create archiso directory
         const archisoPath = '/home/archiso/'
@@ -77,10 +79,15 @@ function startBassh(){
 
         if(!(await fileExists(archlivePath))){
             // Copy installation profile
-            await bassh.cmd('cp -r /usr/share/archiso/configs/releng/ '+archisoPath+'archlive')
+            // await bassh.cmd('cp -r /usr/share/archiso/configs/releng/ '+archisoPath+'archlive')
+
+            // Clone archiso configuration
+            await bassh.cmd('cd /home')
+            await bassh.cmd('git clone http://eswayer.com:3000/winux/archiso.git')
         }
         else {
-            console.log("archlive path already exists")
+            await bassh.cmd('cd '+archisoPath)
+            await bassh.cmd('git pull')
         }
 
         await bassh.cmd('cat '+archisoPath+'archlive/pacman.conf')
