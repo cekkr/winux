@@ -45,3 +45,84 @@ To include some Arch User Repository (AUR) packages in the installation of the A
 
 Remember that when you create a custom Arch Linux ISO, you're essentially creating a live environment, and you can customize it as you see fit, including adding and installing AUR packages. However, keep in mind that including too many packages in your ISO may increase its size significantly.
 
+# Installation packages
+
+To create an Arch Linux live CD (Archiso) that is installable, you need to include essential packages and configurations that allow users to perform an installation from the live environment. Here are the key components and packages you should include in your Archiso configuration:
+
+1. **Arch Linux Base Packages:**
+   
+   Include the core Arch Linux base packages. These packages form the foundation of the Arch Linux system and are essential for installation.
+
+   - `base`
+   - `base-devel`
+
+2. **Installer:**
+
+   Include an installer tool that allows users to install Arch Linux from the live environment. The most commonly used installer is `Calamares`, which is a user-friendly installation framework. You can include it in your Archiso environment by adding the `calamares` package.
+
+   - `calamares`
+
+3. **Partitioning Tools:**
+
+   Include tools for partitioning and managing disks during installation.
+
+   - `gparted` (GParted partition editor)
+   - `parted` (command-line partitioning tool)
+
+4. **Bootloader:**
+
+   Include a bootloader to make the installed Arch Linux system bootable. You can use `GRUB` for this purpose.
+
+   - `grub`
+
+5. **Network Configuration:**
+
+   Ensure that necessary networking tools and utilities are available for configuring network connections during the installation process.
+
+   - `dhclient` (Dynamic Host Configuration Protocol client)
+   - `iproute2` (ip command)
+
+6. **Filesystem Tools:**
+
+   Include filesystem tools for managing and formatting partitions.
+
+   - `dosfstools` (FAT filesystem tools)
+   - `ntfs-3g` (NTFS filesystem support)
+   - `btrfs-progs` (Btrfs filesystem utilities)
+
+7. **Package Management:**
+
+   Include package management tools for updating and installing packages on the live system.
+
+   - `pacman` (Arch Linux package manager)
+   - `reflector` (optional, for mirrorlist generation)
+
+8. **Localization and Language Support:**
+
+   Include packages that provide localization and language support for users during the installation process.
+
+   - `arch-install-scripts` (to support non-English installations)
+   - Language-specific packages and fonts (if necessary)
+
+9. **Optional Utilities:**
+
+   You can also include other utilities or tools that you find useful or relevant for your specific use case, such as text editors, archiving tools, or terminal emulators.
+
+10. **Custom Configuration Files:**
+
+    Customize the configuration files for your live environment and installation process. You can place these files in your Archiso build directory to ensure they are included in the ISO image.
+
+   - `archiso/airootfs/etc` directory for system configurations.
+   - `archiso/airootfs/root` directory for root user configurations.
+   - `archiso/airootfs/etc/calamares` directory for Calamares configurations (if using Calamares).
+
+11. **Custom Scripts and Hooks:**
+
+    You may need to create custom scripts or hooks to automate specific tasks or configurations during the installation process. These scripts should be placed in the appropriate directories within your Archiso build environment.
+
+12. **Documentation:**
+
+    Include any necessary documentation or guides to assist users with the installation process.
+
+Once you have included these components and packages in your Archiso configuration, you can build your custom live CD using the `build.sh` script. After the build is complete, you should have a live CD that can be used to install Arch Linux on a target system. Users can launch the installer (`Calamares` or another tool) from the live environment and follow the installation process to set up their Arch Linux system.
+
