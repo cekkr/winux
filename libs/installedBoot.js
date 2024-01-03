@@ -39,8 +39,8 @@ export async function connectToVMNetwork(chosenInt=null){
     await vbox.vmExec("ip route add default via "+config.Gateway) // add gateway
     //await vbox.vmExec("ip route change default via "+config.Gateway)
 
-    await vbox.vmExec("ip link set "+chosenInt+" down")
-    await vbox.vmExec("ip link set "+chosenInt+" up") // up again
+    //await vbox.vmExec("ip link set "+chosenInt+" down")
+    //await vbox.vmExec("ip link set "+chosenInt+" up") // up again
     await vbox.sleep(vbox.waitAfterLongCmd)
 
     let ifConfigRes = await vbox.vmExec('ifconfig')
