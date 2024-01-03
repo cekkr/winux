@@ -6,7 +6,7 @@ import * as installedBoot from './libs/installedBoot.js'
 
 const host = 'example.com'; // Replace with the hostname or IP address of the server you want to ping.
 
-ping.sys.probe(config.IP, async (isAlive) => {
+ping.default.sys.probe(config.IP, async (isAlive) => {
     if(!isAlive){
         await installedBoot.connectToVMNetwork()
     }
