@@ -4,10 +4,8 @@ import {Bassh} from 'bassh'
 import * as ping from 'ping'
 import * as installedBoot from './libs/installedBoot.js'
 
-const host = 'example.com'; // Replace with the hostname or IP address of the server you want to ping.
-
 ping.default.sys.probe(config.IP, async (isAlive) => {
-    if(!isAlive){
+    if(!isAlive && true){
         await installedBoot.connectToVMNetwork()
     }
 
@@ -22,6 +20,26 @@ function startBassh(){
         password: 'pass' // or use privateKey for key-based authentication
     })
 
+    async function pacmanInstallIfNotExists(pack){
+        let checkRes = await bassh.cmd('pacman -Ql '+pack)
+
+        if(checkRes.stdout.includes('was not found')){
+            let instRes = bassh.cmd('pacman -Sy --noconfirm '+pack)
+
+            instRes.out = async (out)=>{
+                console.log("Install stdout: ", out)
+            }
+
+            instRes.err = async (out)=>{
+                console.error("Install stderr: ", out)
+            }
+            
+            return await instRes
+        }
+
+        console.log("checkRes: ", checkRes)
+    }
+
     bassh.onReady = async function(){
         console.log("bash ready")
     
@@ -32,19 +50,8 @@ function startBassh(){
             console.error("Wrong sudo password.");
             return;
         }
-    
-        // Real time output
-        let pres = bassh.cmd('echo meow')
-        
-        pres.out = async (out)=>{
-        console.log("Real time stdout: ", out)
-        }
-            
-        pres.err = async (out)=>{
-        console.log("Real time stderr: ", out)
-        }
-        
-        pres = await pres;
-        console.log("bash res: ", pres)
+
+        let res = await pacmanInstallIfNotExists("archiso")
+        console.log("archiso install: ", res)
     }
 }

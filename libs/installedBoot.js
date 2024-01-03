@@ -19,6 +19,16 @@ export async function connectToVMNetwork(chosenInt=null){
         }
     }
 
+    // DHCP
+    await vbox.vmExec('echo -e "[Resolve]\\nName='+chosenInt+'\\n\\n[Network]\\nDHCP=yes\\n" > /etc/systemd/network/20-wired.network')
+    await vbox.vmExec('systemctl restart systemd-networkd')
+
+    // DNS
+    let resolv = await vbox.vmExec("cat /etc/resolv.conf")
+    if(!resolv.stdout.includes("8.8.8.8")){
+        await vbox.vmExec('echo -e "\\nnameserver 8.8.8.8\\n" >> /etc/resolv.conf')
+    }
+
     // Set up virtual network
     await vbox.vmExec("ip link set "+chosenInt+" up")
 
@@ -50,16 +60,6 @@ async function install_connection(){
             chosenInt = int 
             break
         }
-    }
-
-    // DHCP
-    await vbox.vmExec('echo -e "[Resolve]\\nName='+chosenInt+'\\n\\n[Network]\\nDHCP=yes\\n" > /etc/systemd/network/20-wired.network')
-    await vbox.vmExec('systemctl restart systemd-networkd')
-
-    // DNS
-    let resolv = await vbox.vmExec("cat /etc/resolv.conf")
-    if(!resolv.stdout.includes("8.8.8.8")){
-        await vbox.vmExec('echo -e "\\nnameserver 8.8.8.8\\n" >> /etc/resolv.conf')
     }
 
     await connectToVMNetwork(chosenInt)
