@@ -20,6 +20,8 @@ function startBassh(){
         password: 'pass' // or use privateKey for key-based authentication
     })
 
+    bassh.verbose = true
+
     async function pacmanInstallIfNotExists(pack){
         let checkRes = await bassh.cmd('pacman -Ql '+pack)
 
@@ -38,6 +40,11 @@ function startBassh(){
         }
 
         return {alreadyInstalled: true}
+    }
+
+    async function fileExists(file){
+        let res = await bassh.cmd('[ -d '+file+' ] && echo "exists"')
+        return res.stdout.startsWith('exists')
     }
 
     bassh.onReady = async function(){
@@ -61,5 +68,21 @@ function startBassh(){
         // Archiso
         res = await pacmanInstallIfNotExists("archiso")
         console.log("archiso install: ", res)
+
+        // Create archiso directory
+        const archisoPath = '/home/archiso/'
+        await bassh.cmd('[ -d '+archisoPath+' ] && echo "The directory exists." || mkdir '+archisoPath)
+
+        const archlivePath = archisoPath + 'archlive/'
+
+        if(!(await fileExists(archlivePath))){
+            // Copy installation profile
+            await bassh.cmd('cp -r /usr/share/archiso/configs/releng/ '+archisoPath+'archlive')
+        }
+        else {
+            console.log("archlive path already exists")
+        }
+
+        await bassh.cmd('cat '+archisoPath+'archlive/pacman.conf')
     }
 }
