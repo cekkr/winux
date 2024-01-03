@@ -126,3 +126,40 @@ To create an Arch Linux live CD (Archiso) that is installable, you need to inclu
 
 Once you have included these components and packages in your Archiso configuration, you can build your custom live CD using the `build.sh` script. After the build is complete, you should have a live CD that can be used to install Arch Linux on a target system. Users can launch the installer (`Calamares` or another tool) from the live environment and follow the installation process to set up their Arch Linux system.
 
+# Install with pacman in ISO
+
+To install a package with `pacman` in an ArchISO directory (i.e., the environment created by an Arch Linux ISO), you need to mount the ArchISO to a directory and then use `chroot` to enter the environment. Here are the steps:
+
+1. Mount the ArchISO to a directory (replace `/mnt/archiso` with your preferred mount point):
+
+```bash
+sudo mount /path/to/archiso.iso /mnt/archiso
+```
+
+2. Change root (chroot) into the mounted directory:
+
+```bash
+sudo arch-chroot /mnt/archiso
+```
+
+Now, you are inside the ArchISO environment and can use `pacman` to install packages.
+
+3. Install the package with `pacman`. For example, if you want to install `vim`, you can run:
+
+```bash
+pacman -S vim
+```
+
+4. After installing the package, you can exit the chroot environment:
+
+```bash
+exit
+```
+
+5. Unmount the ArchISO when you're done:
+
+```bash
+sudo umount /mnt/archiso
+```
+
+That's it! You've installed a package with `pacman` in an ArchISO environment. Make sure to replace `/path/to/archiso.iso` with the actual path to your ArchISO image and adjust the package name as needed.
