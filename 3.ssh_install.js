@@ -5,7 +5,7 @@ import * as ping from 'ping'
 import * as installedBoot from './libs/installedBoot.js'
 
 ping.default.sys.probe(config.IP, async (isAlive) => {
-    if(!isAlive && true){
+    if(!isAlive){
         await installedBoot.connectToVMNetwork()
     }
 

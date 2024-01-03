@@ -1,5 +1,6 @@
 import * as vbox from './vbox.js'
 import * as cmds from './cmds.js'
+import * as config from '../config.js'
 
 vbox.props.password = 'admin'
 vbox.props.bashPath = '/bin/bash'
@@ -32,11 +33,13 @@ export async function connectToVMNetwork(chosenInt=null){
     // Set up virtual network
     await vbox.vmExec("ip link set "+chosenInt+" up")
 
-    await vbox.vmExec('ip addr add 192.168.137.10/24 dev '+chosenInt)
+    await vbox.vmExec('ip addr add '+config.IP+'/24 dev '+chosenInt)
     await vbox.sleep(vbox.waitAfterCmd)
 
-    await vbox.vmExec("ip route add default via 192.168.137.1") // add gateway
+    await vbox.vmExec("ip route add default via "+config.Gateway) // add gateway
+    //await vbox.vmExec("ip route change default via "+config.Gateway)
 
+    await vbox.vmExec("ip link set "+chosenInt+" down")
     await vbox.vmExec("ip link set "+chosenInt+" up") // up again
     await vbox.sleep(vbox.waitAfterLongCmd)
 
