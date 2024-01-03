@@ -37,7 +37,7 @@ function startBassh(){
             return await instRes
         }
 
-        console.log("checkRes: ", checkRes)
+        return {alreadyInstalled: true}
     }
 
     bassh.onReady = async function(){
@@ -51,7 +51,15 @@ function startBassh(){
             return;
         }
 
-        let res = await pacmanInstallIfNotExists("archiso")
+        await createArchiso()
+    }
+
+    async function createArchiso(){
+        // Unlock pacman from previous operations
+        let res = await bassh.cmd('rm /var/lib/pacman/db.lck')
+
+        // Archiso
+        res = await pacmanInstallIfNotExists("archiso")
         console.log("archiso install: ", res)
     }
 }
