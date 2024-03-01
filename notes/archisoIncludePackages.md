@@ -163,3 +163,4 @@ sudo umount /mnt/archiso
 ```
 
 That's it! You've installed a package with `pacman` in an ArchISO environment. Make sure to replace `/path/to/archiso.iso` with the actual path to your ArchISO image and adjust the package name as needed.
+
